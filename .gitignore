@@ -1,2 +1,16 @@
 .worktrees/
 
+# dependencies and build output
+node_modules/
+.next/
+out/
+
+# local environment files
+.env*.local
+
+# test artifacts
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+

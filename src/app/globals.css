@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #fff8e7;
+  --ink: #28243b;
+  --coral: #ff786b;
+  --violet: #7b67e8;
+  --marker: #ffe36e;
+  --muted: #625d70;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--violet);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
