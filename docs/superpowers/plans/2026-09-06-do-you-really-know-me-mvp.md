@@ -81,7 +81,7 @@
 - Create: eslint.config.mjs
 - Create: vitest.config.ts
 - Create: playwright.config.ts
-- Create: .gitignore
+- Modify: .gitignore
 - Create: .env.example
 - Create: src/app/layout.tsx
 - Create: src/app/page.tsx
