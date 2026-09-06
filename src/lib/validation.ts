@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
-import { QUESTIONS } from '@/lib/questions'
+import { FIXED_QUESTION_IDS } from '@/types/domain'
 
 const answerChoiceSchema = z.enum(['A', 'B', 'C', 'D'])
 const questionAnswerShape = Object.fromEntries(
-  QUESTIONS.map((question) => [question.id, answerChoiceSchema]),
-)
+  FIXED_QUESTION_IDS.map((questionId) => [questionId, answerChoiceSchema]),
+) as Record<(typeof FIXED_QUESTION_IDS)[number], typeof answerChoiceSchema>
 
 const nicknameSchema = z.string()
   .transform((value) => value.trim())

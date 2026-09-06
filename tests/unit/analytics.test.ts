@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHmac } from 'node:crypto'
+import { ZodError } from 'zod'
 
 const { createServerDb, from, insert, rpc } = vi.hoisted(() => ({
   createServerDb: vi.fn(),
@@ -11,7 +12,7 @@ const { createServerDb, from, insert, rpc } = vi.hoisted(() => ({
 vi.mock('@/lib/supabase/server', () => ({ createServerDb }))
 vi.mock('server-only', () => ({}))
 
-import { recordEvent } from '@/lib/analytics'
+import { AnalyticsError, recordEvent } from '@/lib/analytics'
 import { assertRateLimit, RateLimitError } from '@/lib/rate-limit'
 
 const anonymousSessionId = '10000000-0000-4000-8000-000000000001'
@@ -48,9 +49,27 @@ describe('analytics recording', () => {
       eventName: 'homepage_view',
       anonymousSessionId,
       metadata: { ip: '203.0.113.1' },
-    })).rejects.toThrow()
+    })).rejects.toBeInstanceOf(ZodError)
 
     expect(from).not.toHaveBeenCalled()
+  })
+
+  it('maps a synchronous database-client failure without exposing its details', async () => {
+    createServerDb.mockImplementationOnce(() => {
+      throw new Error('private database configuration')
+    })
+
+    await expect(recordEvent({ eventName: 'homepage_view', anonymousSessionId })).rejects.toEqual(
+      expect.objectContaining({ name: 'AnalyticsError', message: 'Analytics recording failed' } satisfies Partial<AnalyticsError>),
+    )
+  })
+
+  it('maps a rejected analytics insert without exposing its details', async () => {
+    insert.mockRejectedValueOnce(new Error('private database connection details'))
+
+    await expect(recordEvent({ eventName: 'homepage_view', anonymousSessionId })).rejects.toEqual(
+      expect.objectContaining({ name: 'AnalyticsError', message: 'Analytics recording failed' } satisfies Partial<AnalyticsError>),
+    )
   })
 
   it('hashes only the first Vercel forwarded client IP before calling the RPC', async () => {

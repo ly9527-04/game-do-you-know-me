@@ -15,13 +15,19 @@ export class AnalyticsError extends Error {
 
 export async function recordEvent(input: unknown): Promise<void> {
   const event = eventSchema.parse(input)
-  const { error } = await createServerDb().from('analytics_events').insert({
-    event_name: event.eventName,
-    anonymous_session_id: event.anonymousSessionId,
-    test_id: event.testId ?? null,
-    attempt_id: event.attemptId ?? null,
-    metadata: event.metadata,
-  })
 
-  if (error) throw new AnalyticsError()
+  try {
+    const { error } = await createServerDb().from('analytics_events').insert({
+      event_name: event.eventName,
+      anonymous_session_id: event.anonymousSessionId,
+      test_id: event.testId ?? null,
+      attempt_id: event.attemptId ?? null,
+      metadata: event.metadata,
+    })
+
+    if (error) throw new AnalyticsError()
+  } catch (error) {
+    if (error instanceof AnalyticsError) throw error
+    throw new AnalyticsError()
+  }
 }
