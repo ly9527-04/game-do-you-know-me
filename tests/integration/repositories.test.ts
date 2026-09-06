@@ -189,7 +189,7 @@ describe('manage repository', () => {
       { id: 'attempt-1', nickname: '0011', score: 76, created_at: '2026-09-06T08:00:00Z' },
     ])
     from.mockReturnValueOnce(testQuery).mockReturnValueOnce(attemptsQuery)
-    rpc.mockResolvedValue({ data: { challenge_count: 1001, average_score: 52.5 }, error: null })
+    rpc.mockResolvedValue({ data: [{ challenge_count: 1001, average_score: 52.5 }], error: null })
 
     await expect(getManageSummary(validTestInput.testId)).resolves.toEqual({
       creatorNickname: 'AD钙',
@@ -202,5 +202,9 @@ describe('manage repository', () => {
       ],
     })
     expect(rpc).toHaveBeenCalledWith('get_manage_stats', { p_test_id: validTestInput.testId })
+    expect(attemptsQuery.order.mock.calls).toEqual([
+      ['score', { ascending: false }],
+      ['created_at', { ascending: true }],
+    ])
   })
 })
