@@ -1,4 +1,5 @@
 import type { QuizAnswers } from '@/types/domain'
+import { FIXED_QUESTION_IDS } from '@/types/domain'
 
 export type DraftMode = 'creator' | 'friend'
 
@@ -13,6 +14,8 @@ export type QuizDraft = {
 const DRAFT_VERSION = 1
 const DRAFT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 const DRAFT_PREFIX = 'know-me:quiz-draft:v1'
+const MAX_DRAFT_INDEX = FIXED_QUESTION_IDS.length - 1
+const QUESTION_IDS = new Set<string>(FIXED_QUESTION_IDS)
 
 export function getDraftKey(mode: DraftMode, identity: string): string {
   return `${DRAFT_PREFIX}:${mode}:${encodeURIComponent(identity)}`
@@ -64,10 +67,20 @@ function isQuizDraft(value: unknown): value is QuizDraft {
   return (
     draft.version === DRAFT_VERSION
     && typeof draft.nickname === 'string'
-    && typeof draft.answers === 'object'
-    && draft.answers !== null
-    && Object.values(draft.answers).every((answer) => answer === 'A' || answer === 'B' || answer === 'C' || answer === 'D')
+    && isQuizAnswers(draft.answers)
+    && typeof draft.currentIndex === 'number'
     && Number.isInteger(draft.currentIndex)
+    && draft.currentIndex >= 0
+    && draft.currentIndex <= MAX_DRAFT_INDEX
     && typeof draft.updatedAt === 'string'
   )
+}
+
+function isQuizAnswers(value: unknown): value is QuizAnswers {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+
+  return Object.entries(value).every(([questionId, answer]) => (
+    QUESTION_IDS.has(questionId)
+    && (answer === 'A' || answer === 'B' || answer === 'C' || answer === 'D')
+  ))
 }

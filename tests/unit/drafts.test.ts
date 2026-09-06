@@ -34,6 +34,11 @@ describe('quiz drafts', () => {
     ['damaged JSON', '{not-json'],
     ['wrong version', JSON.stringify({ ...draft, version: 2 })],
     ['expired draft', JSON.stringify({ ...draft, updatedAt: '2026-08-06T00:00:00.000Z' })],
+    ['an answers array', JSON.stringify({ ...draft, answers: ['A'] })],
+    ['an unknown answer key', JSON.stringify({ ...draft, answers: { unknown: 'A' } })],
+    ['an illegal answer choice', JSON.stringify({ ...draft, answers: { q01: 'E' } })],
+    ['a negative current index', JSON.stringify({ ...draft, currentIndex: -1 })],
+    ['a current index after question 25', JSON.stringify({ ...draft, currentIndex: 25 })],
   ])('returns null for %s', (_label, rawDraft) => {
     const key = getDraftKey('creator', '阿钙')
     localStorage.setItem(key, rawDraft)
