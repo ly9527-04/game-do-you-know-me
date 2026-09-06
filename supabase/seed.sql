@@ -29,8 +29,7 @@ insert into questions(id, question_set_id, sort_order, prompt, options, category
 ('q23','00000000-0000-4000-8000-000000000001',23,'你喜欢上一个人以后，更可能变成？','[{"value":"A","text":"明显主动"},{"value":"B","text":"偷偷暗示"},{"value":"C","text":"越喜欢越装"},{"value":"D","text":"等对方先来"}]','real_anchor',3),
 ('q24','00000000-0000-4000-8000-000000000001',24,'很熟的朋友临时放你鸽子，你真实反应是？','[{"value":"A","text":"真无所谓"},{"value":"B","text":"嘴上无所谓，心里有点不爽"},{"value":"C","text":"直接说出来"},{"value":"D","text":"会默默重新判断这个人"}]','real_anchor',3),
 ('q25','00000000-0000-4000-8000-000000000001',25,'突然得到完整的一天空闲时间，你最可能？','[{"value":"A","text":"马上找人出去玩"},{"value":"B","text":"躺一天"},{"value":"C","text":"自己出去乱逛"},{"value":"D","text":"做一直拖着没做的事"}]','real_anchor',2)
-on conflict (id) do update set
-  question_set_id = excluded.question_set_id,
+on conflict (question_set_id, id) do update set
   sort_order = excluded.sort_order,
   prompt = excluded.prompt,
   options = excluded.options,

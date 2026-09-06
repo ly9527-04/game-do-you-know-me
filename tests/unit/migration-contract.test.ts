@@ -24,6 +24,14 @@ describe('Supabase migration contract', () => {
     expect(migration).toMatch(/create unique index questions_order_per_set\s+on questions\(question_set_id, sort_order\)/i)
   })
 
+  it('scopes question identities and persisted answers to a question-set version', () => {
+    expect(migration).toMatch(/primary key \(question_set_id, id\)/i)
+    expect(migration).toMatch(/foreign key \(test_id, question_set_id\)\s+references tests\(id, question_set_id\)/i)
+    expect(migration).toMatch(/foreign key \(attempt_id, question_set_id\)\s+references attempts\(id, question_set_id\)/i)
+    expect(migration.match(/foreign key \(question_set_id, question_id\)\s+references questions\(question_set_id, id\)/gi)).toHaveLength(2)
+    expect(seed).toMatch(/on conflict \(question_set_id, id\) do update/i)
+  })
+
   it('enables RLS on every core table without client allow policies', () => {
     for (const table of [
       'question_sets', 'questions', 'tests', 'creator_answers',
@@ -59,7 +67,7 @@ describe('Supabase migration contract', () => {
   it('seeds the fixed version-one q01-q25 bank idempotently', () => {
     expect(seed).toMatch(/version[^;]+1/i)
     expect(seed).toMatch(/on conflict \(version\) do update/i)
-    expect(seed).toMatch(/on conflict \(id\) do update/i)
+    expect(seed).toMatch(/on conflict \(question_set_id, id\) do update/i)
     for (let order = 1; order <= 25; order += 1) {
       expect(seed).toContain(`q${String(order).padStart(2, '0')}`)
     }

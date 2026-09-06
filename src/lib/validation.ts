@@ -18,12 +18,14 @@ const answersSchema = z.object(questionAnswerShape).strict()
 export const createTestSchema = z.object({
   nickname: nicknameSchema,
   answers: answersSchema,
+  anonymousSessionId: z.uuid().optional(),
 }).strict()
 
 export const createAttemptSchema = z.object({
   nickname: nicknameSchema,
   answers: answersSchema,
   idempotencyKey: z.uuid(),
+  anonymousSessionId: z.uuid().optional(),
 }).strict()
 
 export const ANALYTICS_EVENT_NAMES = [

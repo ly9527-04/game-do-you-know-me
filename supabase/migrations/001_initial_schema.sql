@@ -6,13 +6,14 @@ create table if not exists question_sets (
 );
 
 create table if not exists questions (
-  id text primary key,
+  id text not null,
   question_set_id uuid not null references question_sets(id) on delete restrict,
   sort_order smallint not null check (sort_order between 1 and 25),
   prompt text not null,
   options jsonb not null check (jsonb_typeof(options) = 'array' and jsonb_array_length(options) = 4),
   category text not null check (category in ('abstract', 'semi_abstract', 'real_anchor')),
-  mismatch_priority smallint not null check (mismatch_priority between 1 and 3)
+  mismatch_priority smallint not null check (mismatch_priority between 1 and 3),
+  primary key (question_set_id, id)
 );
 
 create unique index questions_order_per_set
@@ -24,14 +25,20 @@ create table if not exists tests (
   nickname varchar(20) not null check (length(trim(nickname)) between 1 and 20),
   share_code varchar(32) not null unique,
   manage_token_hash text not null unique check (manage_token_hash ~ '^[0-9a-f]{64}$'),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, question_set_id)
 );
 
 create table if not exists creator_answers (
-  test_id uuid not null references tests(id) on delete cascade,
-  question_id text not null references questions(id) on delete restrict,
+  test_id uuid not null,
+  question_set_id uuid not null,
+  question_id text not null,
   answer char(1) not null,
-  primary key (test_id, question_id)
+  primary key (test_id, question_id),
+  foreign key (test_id, question_set_id)
+    references tests(id, question_set_id) on delete cascade,
+  foreign key (question_set_id, question_id)
+    references questions(question_set_id, id) on delete restrict
 );
 
 alter table creator_answers add constraint creator_answer_choice
@@ -39,11 +46,15 @@ alter table creator_answers add constraint creator_answer_choice
 
 create table if not exists attempts (
   id uuid primary key,
-  test_id uuid not null references tests(id) on delete cascade,
+  test_id uuid not null,
+  question_set_id uuid not null,
   nickname varchar(20) not null check (length(trim(nickname)) between 1 and 20),
   score smallint not null,
   idempotency_key uuid not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, question_set_id),
+  foreign key (test_id, question_set_id)
+    references tests(id, question_set_id) on delete cascade
 );
 
 alter table attempts add constraint valid_score
@@ -55,11 +66,16 @@ create index attempts_leaderboard
   on attempts(test_id, score desc, created_at asc);
 
 create table if not exists attempt_answers (
-  attempt_id uuid not null references attempts(id) on delete cascade,
-  question_id text not null references questions(id) on delete restrict,
+  attempt_id uuid not null,
+  question_set_id uuid not null,
+  question_id text not null,
   answer char(1) not null check (answer in ('A', 'B', 'C', 'D')),
   is_correct boolean not null,
-  primary key (attempt_id, question_id)
+  primary key (attempt_id, question_id),
+  foreign key (attempt_id, question_set_id)
+    references attempts(id, question_set_id) on delete cascade,
+  foreign key (question_set_id, question_id)
+    references questions(question_set_id, id) on delete restrict
 );
 
 create table if not exists analytics_events (
@@ -120,8 +136,8 @@ begin
   insert into tests(id, question_set_id, nickname, share_code, manage_token_hash)
   values (p_test_id, p_question_set_id, p_nickname, p_share_code, p_manage_token_hash);
 
-  insert into creator_answers(test_id, question_id, answer)
-  select p_test_id, q.id, item.value::char(1)
+  insert into creator_answers(test_id, question_set_id, question_id, answer)
+  select p_test_id, p_question_set_id, q.id, item.value::char(1)
   from questions q
   join jsonb_each_text(p_answers) item on item.key = q.id
   where q.question_set_id = p_question_set_id;
@@ -168,8 +184,8 @@ begin
     raise exception 'Answers do not match the test question set';
   end if;
 
-  insert into attempts(id, test_id, nickname, score, idempotency_key)
-  values (p_attempt_id, p_test_id, p_nickname, p_score, p_idempotency_key)
+  insert into attempts(id, test_id, question_set_id, nickname, score, idempotency_key)
+  values (p_attempt_id, p_test_id, v_question_set_id, p_nickname, p_score, p_idempotency_key)
   on conflict (test_id, idempotency_key) do nothing
   returning id into v_attempt_id;
 
@@ -179,8 +195,8 @@ begin
     return v_attempt_id;
   end if;
 
-  insert into attempt_answers(attempt_id, question_id, answer, is_correct)
-  select v_attempt_id, q.id, item.value->>'answer', (item.value->>'isCorrect')::boolean
+  insert into attempt_answers(attempt_id, question_set_id, question_id, answer, is_correct)
+  select v_attempt_id, v_question_set_id, q.id, item.value->>'answer', (item.value->>'isCorrect')::boolean
   from questions q
   join jsonb_each(p_answers) item on item.key = q.id
   where q.question_set_id = v_question_set_id;
