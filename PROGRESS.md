@@ -10,6 +10,10 @@
   - 已完成 Next.js、TypeScript、Tailwind、ESLint、Vitest 与 Playwright 基础配置；可使用 `dev`、`build`、`lint`、`test`、`test:run`、`test:e2e`、`typecheck` 命令。
   - 首页 smoke test 覆盖产品承诺和创建入口；全局样式固定朋友手帐色板、键盘焦点与减少动态效果。
 
+- **版本化题库与结果规则**（`src/types/domain.ts`、`src/lib/questions.ts`、`src/lib/scoring.ts`、`tests/unit/questions.test.ts`、`tests/unit/scoring.test.ts`）
+  - 已录入附录 A 固定 25 题，题目 ID 为 `q01`～`q25`，并以 `QUESTION_SET_VERSION = 1` 固定版本；选项和顺序只读，分类仅供内部使用。
+  - 已实现完整答卷校验、每题 4 分的纯计分、六个分数段文案，以及按错题优先级和挑战 ID 稳定散列选择最多 3 题的结果规则。
+
 - **产品设计**（`docs/superpowers/specs/2026-09-06-do-you-really-know-me-design.md`）
   - 已完成 MVP 范围、用户流程、视觉方向、技术架构、数据模型、安全、埋点、测试与部署设计。
 - **实施计划**（`docs/superpowers/plans/2026-09-06-do-you-really-know-me-mvp.md`）
