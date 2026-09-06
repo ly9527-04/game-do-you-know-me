@@ -32,17 +32,28 @@ describe('Supabase migration contract', () => {
       expect(migration).toMatch(new RegExp(`alter table ${table} enable row level security`, 'i'))
     }
     expect(migration).not.toMatch(/create policy/i)
-    expect(migration).not.toMatch(/\b(?:anon|authenticated)\b/i)
   })
 
-  it('defines three security-definer transactional RPCs with input guards', () => {
+  it('defines security-definer transactional RPCs with input guards', () => {
     for (const rpc of ['create_test', 'create_attempt', 'check_rate_limit']) {
       expect(migration).toMatch(new RegExp(`create or replace function ${rpc}\\b`, 'i'))
     }
-    expect(migration).toMatch(/jsonb_object_length\(p_answers\) <> 25/i)
+    expect(migration).toMatch(/jsonb_typeof\(p_answers\) <> 'object'/i)
+    expect(migration).toMatch(/select count\(\*\) from jsonb_each\(p_answers\)[\s\S]*<> 25/i)
     expect(migration).toMatch(/on conflict \(test_id, idempotency_key\)/i)
     expect(migration).toMatch(/on conflict \(key_hash, action\) do update/i)
-    expect(migration.match(/security definer/gi)).toHaveLength(3)
+    expect(migration.match(/security definer/gi)).toHaveLength(4)
+    for (const rpc of ['create_test', 'create_attempt', 'check_rate_limit']) {
+      expect(migration).toMatch(new RegExp(`revoke execute on function ${rpc}\\([^;]+\\) from public, anon, authenticated;`, 'i'))
+      expect(migration).toMatch(new RegExp(`grant execute on function ${rpc}\\([^;]+\\) to service_role;`, 'i'))
+    }
+  })
+
+  it('defines an aggregated management stats RPC', () => {
+    expect(migration).toMatch(/create or replace function get_manage_stats\b/i)
+    expect(migration).toMatch(/count\(\*\)[\s\S]*avg\(score\)/i)
+    expect(migration).toMatch(/revoke execute on function get_manage_stats\([^;]+\) from public, anon, authenticated;/i)
+    expect(migration).toMatch(/grant execute on function get_manage_stats\([^;]+\) to service_role;/i)
   })
 
   it('seeds the fixed version-one q01-q25 bank idempotently', () => {

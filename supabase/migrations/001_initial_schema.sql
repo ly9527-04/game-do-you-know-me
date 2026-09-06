@@ -102,7 +102,10 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  if jsonb_typeof(p_answers) <> 'object' or jsonb_object_length(p_answers) <> 25 then
+  if jsonb_typeof(p_answers) <> 'object' then
+    raise exception 'A complete 25-answer object is required';
+  end if;
+  if (select count(*) from jsonb_each(p_answers)) <> 25 then
     raise exception 'A complete 25-answer object is required';
   end if;
   if exists (select 1 from jsonb_each_text(p_answers) item where item.value not in ('A', 'B', 'C', 'D')) then
@@ -143,7 +146,10 @@ declare
   v_attempt_id uuid;
   v_question_set_id uuid;
 begin
-  if jsonb_typeof(p_answers) <> 'object' or jsonb_object_length(p_answers) <> 25 then
+  if jsonb_typeof(p_answers) <> 'object' then
+    raise exception 'A complete 25-answer object is required';
+  end if;
+  if (select count(*) from jsonb_each(p_answers)) <> 25 then
     raise exception 'A complete 25-answer object is required';
   end if;
   if exists (
@@ -217,9 +223,22 @@ begin
 end;
 $$;
 
-revoke all on function create_test(uuid, uuid, text, text, text, jsonb) from public;
-revoke all on function create_attempt(uuid, uuid, text, smallint, uuid, jsonb) from public;
-revoke all on function check_rate_limit(text, text, integer, integer) from public;
+create or replace function get_manage_stats(p_test_id uuid)
+returns table(challenge_count bigint, average_score numeric)
+language sql
+security definer
+set search_path = public, pg_temp
+as $$
+  select count(*)::bigint, coalesce(avg(score), 0)::numeric
+  from attempts
+  where test_id = p_test_id;
+$$;
+
+revoke execute on function create_test(uuid, uuid, text, text, text, jsonb) from public, anon, authenticated;
+revoke execute on function create_attempt(uuid, uuid, text, smallint, uuid, jsonb) from public, anon, authenticated;
+revoke execute on function check_rate_limit(text, text, integer, integer) from public, anon, authenticated;
+revoke execute on function get_manage_stats(uuid) from public, anon, authenticated;
 grant execute on function create_test(uuid, uuid, text, text, text, jsonb) to service_role;
 grant execute on function create_attempt(uuid, uuid, text, smallint, uuid, jsonb) to service_role;
 grant execute on function check_rate_limit(text, text, integer, integer) to service_role;
+grant execute on function get_manage_stats(uuid) to service_role;

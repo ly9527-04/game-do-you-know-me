@@ -19,6 +19,7 @@
   - 已定义八张启用 RLS 且默认无客户端策略的核心表；`create_test`、`create_attempt` 与 `check_rate_limit` 通过 `security definer` RPC 提供服务端事务写入、幂等挑战和原子限流。
   - 固定版本 1 的 25 题以可重复执行的 SQL 种子保存；静态契约逐题核对 `q01`～`q25` 的题面和选项，真实迁移留待独立 Supabase 预览项目验证。
   - 服务端仓储统一使用 `SUPABASE_SECRET_KEY`，将数据库 snake_case 映射为 camelCase DTO；公开测试读取列清单不包含创建者答案，数据库原始错误不会传给调用方。
+  - 修复 JSONB 对象键计数兼容 PostgreSQL，并为全部 SECURITY DEFINER 函数显式撤销客户端执行权限；管理统计改由服务端聚合 RPC 返回，排行榜明细保持 score 降序、created_at 升序。
 
 - **产品设计**（`docs/superpowers/specs/2026-09-06-do-you-really-know-me-design.md`）
   - 已完成 MVP 范围、用户流程、视觉方向、技术架构、数据模型、安全、埋点、测试与部署设计。

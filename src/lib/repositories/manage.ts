@@ -24,6 +24,9 @@ export async function getManageSummary(testId: string): Promise<ManageSummary | 
   if (testResult.error) throw new RepositoryError('get managed test')
   if (!testResult.data) return null
 
+  const statsResult = await db.rpc('get_manage_stats', { p_test_id: testId })
+  if (statsResult.error || !statsResult.data) throw new RepositoryError('get manage stats')
+
   const attemptsResult = await db
     .from('attempts')
     .select('id, nickname, score, created_at')
@@ -36,12 +39,15 @@ export async function getManageSummary(testId: string): Promise<ManageSummary | 
   const rows = (attemptsResult.data ?? []) as unknown as {
     id: string; nickname: string; score: number; created_at: string
   }[]
-  const total = rows.reduce((sum, row) => sum + row.score, 0)
+  const stats = (Array.isArray(statsResult.data) ? statsResult.data[0] : statsResult.data) as {
+    challenge_count: number
+    average_score: number
+  }
   return {
     creatorNickname: test.nickname,
     shareCode: test.share_code,
-    challengeCount: rows.length,
-    averageScore: rows.length === 0 ? 0 : total / rows.length,
+    challengeCount: Number(stats.challenge_count),
+    averageScore: Number(stats.average_score),
     entries: rows.map((row) => ({
       attemptId: row.id,
       nickname: row.nickname,

@@ -185,20 +185,22 @@ describe('manage repository', () => {
   it('returns challengeCount, averageScore and sorted camelCase entries', async () => {
     const testQuery = queryResult({ nickname: 'AD钙', share_code: 'share123' })
     const attemptsQuery = queryResult([
-      { id: 'attempt-1', nickname: '0011', score: 76, created_at: '2026-09-06T08:00:00Z' },
       { id: 'attempt-2', nickname: '小明', score: 100, created_at: '2026-09-06T09:00:00Z' },
+      { id: 'attempt-1', nickname: '0011', score: 76, created_at: '2026-09-06T08:00:00Z' },
     ])
     from.mockReturnValueOnce(testQuery).mockReturnValueOnce(attemptsQuery)
+    rpc.mockResolvedValue({ data: { challenge_count: 1001, average_score: 52.5 }, error: null })
 
     await expect(getManageSummary(validTestInput.testId)).resolves.toEqual({
       creatorNickname: 'AD钙',
       shareCode: 'share123',
-      challengeCount: 2,
-      averageScore: 88,
+      challengeCount: 1001,
+      averageScore: 52.5,
       entries: [
-        { attemptId: 'attempt-1', nickname: '0011', score: 76, createdAt: '2026-09-06T08:00:00Z' },
         { attemptId: 'attempt-2', nickname: '小明', score: 100, createdAt: '2026-09-06T09:00:00Z' },
+        { attemptId: 'attempt-1', nickname: '0011', score: 76, createdAt: '2026-09-06T08:00:00Z' },
       ],
     })
+    expect(rpc).toHaveBeenCalledWith('get_manage_stats', { p_test_id: validTestInput.testId })
   })
 })
