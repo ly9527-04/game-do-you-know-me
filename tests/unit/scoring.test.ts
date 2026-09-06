@@ -14,6 +14,29 @@ it('requires complete 25-answer sets', () => {
   expect(() => scoreAnswers({}, allA)).toThrow('A complete 25-answer set is required')
 })
 
+it('rejects 25 unrelated answer keys', () => {
+  const unrelatedAnswers = Object.fromEntries(
+    Array.from({ length: 25 }, (_, index) => [`other-${index}`, 'A']),
+  ) as QuizAnswers
+
+  expect(() => scoreAnswers(unrelatedAnswers, unrelatedAnswers)).toThrow(
+    'A complete 25-answer set is required',
+  )
+})
+
+it('rejects a missing expected key replaced with an extra key', () => {
+  const { q25: _, ...answersWithoutQ25 } = allA
+  const malformedAnswers = { ...answersWithoutQ25, extra: 'A' } as QuizAnswers
+
+  expect(() => scoreAnswers(malformedAnswers, allA)).toThrow('A complete 25-answer set is required')
+})
+
+it('rejects an invalid runtime answer choice', () => {
+  const malformedAnswers = { ...allA, q01: 'Z' } as unknown as QuizAnswers
+
+  expect(() => scoreAnswers(malformedAnswers, allA)).toThrow('A complete 25-answer set is required')
+})
+
 it.each([
   [0, '建议重新认识一下。'],
   [39, '建议重新认识一下。'],

@@ -10,8 +10,19 @@ const verdicts = [
   [0, '建议重新认识一下。'],
 ] as const
 
+const questionIds: ReadonlySet<string> = new Set(QUESTIONS.map((question) => question.id))
+const answerChoices = new Set(['A', 'B', 'C', 'D'])
+
+function isCompleteAnswerSet(answers: QuizAnswers): boolean {
+  const keys = Object.keys(answers)
+  return (
+    keys.length === QUESTIONS.length &&
+    keys.every((key) => questionIds.has(key) && answerChoices.has(answers[key]))
+  )
+}
+
 export function scoreAnswers(creator: QuizAnswers, friend: QuizAnswers): ScoreResult {
-  if (Object.keys(creator).length !== 25 || Object.keys(friend).length !== 25) {
+  if (!isCompleteAnswerSet(creator) || !isCompleteAnswerSet(friend)) {
     throw new Error('A complete 25-answer set is required')
   }
 
