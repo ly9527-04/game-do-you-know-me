@@ -8,7 +8,8 @@
 
 - **项目基础、工具链与设计令牌**（`package.json`、根配置、`src/app`、`tests/unit/home.test.tsx`）
   - 已完成 Next.js、TypeScript、Tailwind、ESLint、Vitest 与 Playwright 基础配置；可使用 `dev`、`build`、`lint`、`test`、`test:run`、`test:e2e`、`typecheck` 命令。
-  - 首页 smoke test 覆盖产品承诺和创建入口；全局样式固定朋友手帐色板、键盘焦点与减少动态效果。
+  - 首页 smoke test 覆盖产品承诺、创建入口和“无需注册 / 25 道题 / 约 3 分钟”投入说明。
+  - 全站已完成轻量社交卡片视觉精修：统一暖白底色、紫色主操作、柔和描边与圆角，保留键盘焦点、44px 触控区域、320px 响应式和减少动态效果；答题选中态、深色结果卡及排行榜首位均有明确层级。
 
 - **版本化题库与结果规则**（`src/types/domain.ts`、`src/lib/questions.ts`、`src/lib/scoring.ts`、`tests/unit/questions.test.ts`、`tests/unit/scoring.test.ts`）
   - 已录入附录 A 固定 25 题，题目 ID 为 `q01`～`q25`，并以 `QUESTION_SET_VERSION = 1` 固定版本；选项和顺序只读，分类仅供内部使用。
@@ -68,4 +69,4 @@
 - 创建者答案不能在朋友提交前下发；计分必须由服务端完成。
 - 固定 25 道题不可改动，题库需版本化，保证后续改题不破坏已有测试。
 - 不保存或记录原始 IP、答案、管理令牌等敏感埋点上下文；管理会话失效时间为秒级 Unix 时间，`expires <= now` 均视为过期。
-- 设计令牌统一使用 `--paper`、`--ink`、`--coral`、`--violet`、`--marker`；重要交互必须保留非颜色状态提示与可见焦点。
+- 设计令牌统一使用 `--paper`、`--surface`、`--ink`、`--muted`、`--coral`、`--violet`、`--violet-soft`、`--marker`、`--line`；重要交互必须保留非颜色状态提示与可见焦点。
