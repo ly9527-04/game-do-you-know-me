@@ -1,47 +1,53 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { QuestionCard } from '@/components/quiz/QuestionCard'
 import { QuizProgress } from '@/components/quiz/QuizProgress'
 import { getDraftKey, loadDraft, saveDraft, type DraftMode } from '@/lib/drafts'
 import { QUESTIONS } from '@/lib/questions'
-import type { AnswerChoice, QuizAnswers } from '@/types/domain'
+import type { AnswerChoice, Question, QuizAnswers } from '@/types/domain'
 
 export type QuizMode = 'creator' | { role: 'friend'; shareCode: string }
 
 export type QuizSessionProps = {
   mode: QuizMode
   subjectNickname: string
+  questions?: readonly Question[]
+  questionSetVersion?: number
   initialAnswers: QuizAnswers
   onComplete: (answers: QuizAnswers) => void
 }
 
-type QuizSessionStateProps = Omit<QuizSessionProps, 'mode'> & { draftKey: string }
+type QuizSessionStateProps = Omit<QuizSessionProps, 'mode' | 'questions' | 'questionSetVersion'> & {
+  draftKey: string
+  questions: readonly Question[]
+  questionSetVersion: number
+}
 
-const LAST_INDEX = QUESTIONS.length - 1
-
-export function QuizSession({ mode, subjectNickname, initialAnswers, onComplete }: QuizSessionProps) {
+export function QuizSession({ mode, subjectNickname, questions = QUESTIONS, questionSetVersion = 1, initialAnswers, onComplete }: QuizSessionProps) {
   const draftIdentity = typeof mode === 'string' ? subjectNickname : mode.shareCode
   const draftMode: DraftMode = typeof mode === 'string' ? mode : 'friend'
   const draftKey = getDraftKey(draftMode, draftIdentity)
 
-  return <QuizSessionState key={draftKey} draftKey={draftKey} subjectNickname={subjectNickname} initialAnswers={initialAnswers} onComplete={onComplete} />
+  return <QuizSessionState key={draftKey} draftKey={draftKey} subjectNickname={subjectNickname} questions={questions} questionSetVersion={questionSetVersion} initialAnswers={initialAnswers} onComplete={onComplete} />
 }
 
-function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplete }: QuizSessionStateProps) {
+function QuizSessionState({ draftKey, subjectNickname, questions, questionSetVersion, initialAnswers, onComplete }: QuizSessionStateProps) {
+  const lastIndex = questions.length - 1
+  const questionIds = useMemo(() => questions.map((question) => question.id), [questions])
   const completionRef = useRef(false)
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [seedAnswers] = useState(initialAnswers)
   const [answers, setAnswers] = useState<QuizAnswers>(seedAnswers)
-  const [currentIndex, setCurrentIndex] = useState(() => firstUnansweredIndex(seedAnswers))
+  const [currentIndex, setCurrentIndex] = useState(() => firstUnansweredIndex(questions, seedAnswers))
   const [isReady, setIsReady] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
 
   useEffect(() => {
-    const draft = loadDraft(draftKey)
+    const draft = loadDraft(draftKey, questionIds)
     const restoredAnswers = { ...(draft?.answers ?? {}), ...seedAnswers }
-    const firstUnanswered = firstUnansweredIndex(restoredAnswers)
-    const requestedIndex = draft ? clampIndex(draft.currentIndex) : firstUnanswered
+    const firstUnanswered = firstUnansweredIndex(questions, restoredAnswers)
+    const requestedIndex = draft ? clampIndex(draft.currentIndex, lastIndex) : firstUnanswered
     let active = true
 
     queueMicrotask(() => {
@@ -54,14 +60,14 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
     return () => {
       active = false
     }
-  }, [draftKey, seedAnswers])
+  }, [draftKey, seedAnswers, questions, lastIndex, questionIds])
 
   useEffect(() => () => {
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current)
   }, [])
 
-  const question = QUESTIONS[currentIndex]
-  const isLastQuestion = currentIndex === LAST_INDEX
+  const question = questions[currentIndex]
+  const isLastQuestion = currentIndex === lastIndex
   const canContinue = Boolean(answers[question.id])
   const isLocked = !isReady || isCompleted
 
@@ -81,7 +87,7 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
     const resolveSelection = () => {
       advanceTimerRef.current = null
       if (isLastQuestion) {
-        if (isComplete(nextAnswers) && !completionRef.current) {
+        if (isComplete(questions, nextAnswers) && !completionRef.current) {
           completionRef.current = true
           setIsCompleted(true)
           onComplete(nextAnswers)
@@ -89,7 +95,7 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
         return
       }
 
-      const nextIndex = Math.min(currentIndex + 1, LAST_INDEX)
+      const nextIndex = Math.min(currentIndex + 1, lastIndex)
       setCurrentIndex(nextIndex)
       persistDraft(nextAnswers, nextIndex)
     }
@@ -104,7 +110,7 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
   function goNext() {
     if (isLocked || !canContinue || isLastQuestion) return
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current)
-    const nextIndex = Math.min(currentIndex + 1, LAST_INDEX)
+    const nextIndex = Math.min(currentIndex + 1, lastIndex)
     setCurrentIndex(nextIndex)
     persistDraft(answers, nextIndex)
   }
@@ -119,7 +125,9 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
 
   function persistDraft(nextAnswers: QuizAnswers, nextIndex: number) {
     saveDraft(draftKey, {
-      version: 1,
+      version: 2,
+      questionSetVersion,
+      questionIds,
       nickname: subjectNickname,
       answers: nextAnswers,
       currentIndex: nextIndex,
@@ -129,7 +137,7 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
 
   return (
     <section className="quiz-session" aria-label={`${subjectNickname}的答题卡`} aria-busy={!isReady}>
-      <QuizProgress current={currentIndex + 1} total={QUESTIONS.length} />
+      <QuizProgress current={currentIndex + 1} total={questions.length} />
       <QuestionCard question={question} value={answers[question.id]} onSelect={selectAnswer} disabled={isLocked} />
       <nav className="quiz-session__navigation" aria-label="题目导航">
         <button className="quiz-session__previous" type="button" onClick={goPrevious} disabled={isLocked || currentIndex === 0}>上一题</button>
@@ -139,17 +147,17 @@ function QuizSessionState({ draftKey, subjectNickname, initialAnswers, onComplet
   )
 }
 
-function clampIndex(index: number): number {
-  return Math.max(0, Math.min(index, LAST_INDEX))
+function clampIndex(index: number, lastIndex: number): number {
+  return Math.max(0, Math.min(index, lastIndex))
 }
 
-function firstUnansweredIndex(answers: QuizAnswers): number {
-  const firstUnanswered = QUESTIONS.findIndex((question) => !answers[question.id])
-  return firstUnanswered === -1 ? LAST_INDEX : firstUnanswered
+function firstUnansweredIndex(questions: readonly Question[], answers: QuizAnswers): number {
+  const firstUnanswered = questions.findIndex((question) => !answers[question.id])
+  return firstUnanswered === -1 ? questions.length - 1 : firstUnanswered
 }
 
-function isComplete(answers: QuizAnswers): boolean {
-  return QUESTIONS.every((question) => answers[question.id])
+function isComplete(questions: readonly Question[], answers: QuizAnswers): boolean {
+  return questions.every((question) => answers[question.id])
 }
 
 function prefersReducedMotion(): boolean {

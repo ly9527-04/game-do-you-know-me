@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getDraftKey, saveDraft } from '@/lib/drafts'
 import { FriendStartPage } from '@/components/friend/FriendStartPage'
+import { FIXED_QUESTION_IDS } from '@/types/domain'
 
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
@@ -13,8 +14,8 @@ afterEach(() => {
 
 describe('FriendStartPage', () => {
   it('offers to continue the draft for this test without mixing another test draft', async () => {
-    saveDraft(getDraftKey('friend', 'other'), { version: 1, nickname: '别人', answers: { q01: 'A' }, currentIndex: 1, updatedAt: '2026-09-06T09:00:00.000Z' })
-    saveDraft(getDraftKey('friend', 'current'), { version: 1, nickname: '小明', answers: { q01: 'A', q02: 'B' }, currentIndex: 2, updatedAt: '2026-09-06T08:00:00.000Z' })
+    saveDraft(getDraftKey('friend', 'other'), { version: 2, questionSetVersion: 1, questionIds: [...FIXED_QUESTION_IDS], nickname: '别人', answers: { q01: 'A' }, currentIndex: 1, updatedAt: '2026-09-06T09:00:00.000Z' })
+    saveDraft(getDraftKey('friend', 'current'), { version: 2, questionSetVersion: 1, questionIds: [...FIXED_QUESTION_IDS], nickname: '小明', answers: { q01: 'A', q02: 'B' }, currentIndex: 2, updatedAt: '2026-09-06T08:00:00.000Z' })
 
     render(<FriendStartPage shareCode="current" creatorNickname="阿钙" />)
 

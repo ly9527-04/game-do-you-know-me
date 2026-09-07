@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { createServerDb } from '@/lib/supabase/server'
-import type { AnswerChoice, Question, QuestionCategory, QuestionOption, QuizAnswers } from '@/types/domain'
+import type { AnswerChoice, Question, QuestionCategory, QuestionOption, QuestionPoolGroup, QuizAnswers } from '@/types/domain'
 
 interface QuestionRow {
   id: string
@@ -9,6 +9,7 @@ interface QuestionRow {
   prompt: string
   options: readonly QuestionOption[]
   category: QuestionCategory
+  pool_group?: QuestionPoolGroup
   mismatch_priority: number
 }
 
@@ -60,6 +61,7 @@ function mapQuestion(row: QuestionRow): Question {
     prompt: row.prompt,
     options: row.options,
     category: row.category,
+    poolGroup: row.pool_group ?? 'classic',
     mismatchPriority: row.mismatch_priority,
   }
 }
@@ -72,7 +74,7 @@ export async function getActiveQuestionSet(): Promise<ActiveQuestionSet | null> 
   const db = createServerDb()
   const { data, error } = await db
     .from('question_sets')
-    .select('id, version, questions(id, sort_order, prompt, options, category, mismatch_priority)')
+    .select('id, version, questions(id, sort_order, prompt, options, category, pool_group, mismatch_priority)')
     .eq('is_active', true)
     .order('sort_order', { referencedTable: 'questions' })
     .maybeSingle()
@@ -99,7 +101,7 @@ export async function createTestRecord(input: CreateTestRecordInput): Promise<st
 export async function getPublicTest(shareCode: string): Promise<PublicTest | null> {
   const { data, error } = await createServerDb()
     .from('tests')
-    .select('id, nickname, question_sets(version, questions(id, sort_order, prompt, options, category, mismatch_priority))')
+    .select('id, nickname, question_sets(version, questions(id, sort_order, prompt, options, category, pool_group, mismatch_priority))')
     .eq('share_code', shareCode)
     .order('sort_order', { referencedTable: 'question_sets.questions' })
     .maybeSingle()

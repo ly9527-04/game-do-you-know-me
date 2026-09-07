@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { clearDraft, getDraftKey, loadDraft, type DraftMode, type QuizDraft } from '@/lib/drafts'
+import { clearDraft, DRAFT_STORAGE_PREFIX, getDraftKey, loadDraft, type DraftMode, type QuizDraft } from '@/lib/drafts'
 
 type ResumeDraftProps = {
   mode?: DraftMode
@@ -55,7 +55,7 @@ function findLatestDraft(mode: DraftMode, draftIdentity?: string): DraftCandidat
     return draft ? { key, draft } : null
   }
 
-  const prefix = `know-me:quiz-draft:v1:${mode}:`
+  const prefix = `${DRAFT_STORAGE_PREFIX}:${mode}:`
   let latest: DraftCandidate | null = null
   try {
     for (let index = 0; index < window.localStorage.length; index += 1) {

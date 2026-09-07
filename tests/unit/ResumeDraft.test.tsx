@@ -2,9 +2,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getDraftKey, saveDraft, type QuizDraft } from '@/lib/drafts'
 import { ResumeDraft } from '@/components/system/ResumeDraft'
+import { FIXED_QUESTION_IDS } from '@/types/domain'
 
 const draft: QuizDraft = {
-  version: 1,
+  version: 2,
+  questionSetVersion: 1,
+  questionIds: [...FIXED_QUESTION_IDS],
   nickname: '阿钙',
   answers: { q01: 'A', q02: 'B' },
   currentIndex: 2,

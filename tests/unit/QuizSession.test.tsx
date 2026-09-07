@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FIXED_QUESTION_IDS, type QuizAnswers } from '@/types/domain'
 import { clearDraft, getDraftKey, loadDraft, saveDraft } from '@/lib/drafts'
 import { QuizSession } from '@/components/quiz/QuizSession'
+import { QUESTIONS } from '@/lib/questions'
 
 const subjectNickname = '阿钙'
 
@@ -27,6 +28,21 @@ async function finishDraftRecovery() {
 }
 
 describe('QuizSession', () => {
+  it('renders and persists the supplied fixed question order', async () => {
+    const selectedQuestions = [...QUESTIONS].reverse()
+    render(<QuizSession mode="creator" subjectNickname={subjectNickname} questionSetVersion={2} questions={selectedQuestions} initialAnswers={{}} onComplete={vi.fn()} />)
+    await finishDraftRecovery()
+
+    expect(screen.getByRole('group', { name: QUESTIONS[24].prompt })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /A.*马上找人出去玩/ }))
+    expect(loadDraft(getDraftKey('creator', subjectNickname), selectedQuestions.map((question) => question.id))).toMatchObject({
+      version: 2,
+      questionSetVersion: 2,
+      questionIds: selectedQuestions.map((question) => question.id),
+      answers: { q25: 'A' },
+    })
+  })
+
   it('saves immediately and advances exactly after 200ms', async () => {
     vi.useFakeTimers()
     render(<QuizSession mode="creator" subjectNickname={subjectNickname} initialAnswers={{}} onComplete={vi.fn()} />)
@@ -74,7 +90,9 @@ describe('QuizSession', () => {
     const onComplete = vi.fn()
     const initialAnswers = answersThrough(24)
     saveDraft(getDraftKey('creator', subjectNickname), {
-      version: 1,
+      version: 2,
+      questionSetVersion: 1,
+      questionIds: [...FIXED_QUESTION_IDS],
       nickname: subjectNickname,
       answers: {},
       currentIndex: 999,
@@ -135,7 +153,9 @@ describe('QuizSession', () => {
   it('restores after hydration without changing the server markup or accepting input first', async () => {
     const key = getDraftKey('creator', subjectNickname)
     saveDraft(key, {
-      version: 1,
+      version: 2,
+      questionSetVersion: 1,
+      questionIds: [...FIXED_QUESTION_IDS],
       nickname: subjectNickname,
       answers: answersThrough(7),
       currentIndex: 7,
@@ -184,7 +204,9 @@ describe('QuizSession', () => {
 
   it('restores no farther than the first unanswered question after merging answers', async () => {
     saveDraft(getDraftKey('creator', subjectNickname), {
-      version: 1,
+      version: 2,
+      questionSetVersion: 1,
+      questionIds: [...FIXED_QUESTION_IDS],
       nickname: subjectNickname,
       answers: { q01: 'A' },
       currentIndex: 24,

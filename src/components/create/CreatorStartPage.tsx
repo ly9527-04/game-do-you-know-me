@@ -3,20 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { CreatorStart } from '@/components/create/CreatorStart'
 import { EventBeacon } from '@/components/analytics/EventBeacon'
-import { saveDraft, getDraftKey } from '@/lib/drafts'
-import type { QuizAnswers } from '@/types/domain'
 
 export function CreatorStartPage() {
   const router = useRouter()
 
   function continueToQuiz(nickname: string) {
-    saveDraft(getDraftKey('creator', nickname), {
-      version: 1,
-      nickname,
-      answers: {} as QuizAnswers,
-      currentIndex: 0,
-      updatedAt: new Date().toISOString(),
-    })
     router.push(`/create/quiz?nickname=${encodeURIComponent(nickname)}`)
   }
 
