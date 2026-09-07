@@ -24,6 +24,7 @@
 
 - **产品设计**（`docs/superpowers/specs/2026-09-06-do-you-really-know-me-design.md`）
   - 已完成 MVP 范围、用户流程、视觉方向、技术架构、数据模型、安全、埋点、测试与部署设计。
+  - 已确认全站轻量 UI 精修方向：采用“轻盈社交卡片”为主视觉，结果页引入少量深色对比；功能、数据与 URL 保持不变，详见 `2026-09-07-ui-light-polish-design.md`。
 - **实施计划**（`docs/superpowers/plans/2026-09-06-do-you-really-know-me-mvp.md`）
   - 已将 MVP 拆为 12 个可独立测试和提交的任务，执行时采用 TDD，并在每个任务后更新本文件。
   - 覆盖项目基础、题库与计分、Supabase、匿名安全、答题组件、创建/挑战/结果/管理闭环、埋点、E2E 和部署。
