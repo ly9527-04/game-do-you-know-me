@@ -205,6 +205,22 @@ body {
   line-height: 1.7;
 }
 
+.home-page__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-page__facts li {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
 .button {
   display: inline-flex;
   min-height: 2.8rem;
