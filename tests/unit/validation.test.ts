@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import { createAttemptSchema, createTestSchema, eventSchema } from '@/lib/validation'
+import { createAttemptSchema, createTestSchema, eventSchema, validateSelectedAnswers } from '@/lib/validation'
+import { QUESTION_POOL } from '@/lib/questions'
 
 const answers = {
   q01: 'A', q02: 'A', q03: 'A', q04: 'A', q05: 'A',
@@ -10,55 +11,42 @@ const answers = {
   q21: 'A', q22: 'A', q23: 'A', q24: 'A', q25: 'A',
 } as const
 const idempotencyKey = '10000000-0000-4000-8000-000000000001'
-
-const shortenedQuestionBank = Array.from({ length: 24 }, (_, index) => ({
-  id: `q${String(index + 1).padStart(2, '0')}`,
-  order: index + 1,
-  prompt: `Question ${index + 1}`,
-  options: [
-    { value: 'A', text: 'A' }, { value: 'B', text: 'B' },
-    { value: 'C', text: 'C' }, { value: 'D', text: 'D' },
-  ],
-  category: 'abstract',
-  mismatchPriority: 1,
-}))
+const questionIds = [
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'classic').slice(0, 5),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'daily').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'personality').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'scenario').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'relationship').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'roast').slice(0, 4),
+].map((question) => question.id)
+const selectedAnswers = Object.fromEntries(questionIds.map((id) => [id, 'A']))
 
 describe('request validation', () => {
   it('trims nicknames and counts astral Unicode characters without UTF-16 overcounting', () => {
     const twentyEmoji = '😀'.repeat(20)
 
-    expect(createTestSchema.safeParse({ nickname: `  ${twentyEmoji}  `, answers }).success).toBe(true)
-    expect(createTestSchema.safeParse({ nickname: '   ', answers }).success).toBe(false)
-    expect(createTestSchema.safeParse({ nickname: '😀'.repeat(21), answers }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: `  ${twentyEmoji}  `, questionIds, answers: selectedAnswers }).success).toBe(true)
+    expect(createTestSchema.safeParse({ nickname: '   ', questionIds, answers: selectedAnswers }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: '😀'.repeat(21), questionIds, answers: selectedAnswers }).success).toBe(false)
   })
 
-  it('requires precisely the fixed q01 through q25 answer keys and valid choices', () => {
-    const { q25: _q25, ...missingAnswer } = answers
-    const tooManyAnswers = { ...answers, extra: 'A' }
-    const invalidChoice = { ...answers, q01: 'E' }
-
-    expect(createTestSchema.safeParse({ nickname: 'AD钙', answers: missingAnswer }).success).toBe(false)
-    expect(createTestSchema.safeParse({ nickname: 'AD钙', answers: tooManyAnswers }).success).toBe(false)
-    expect(createTestSchema.safeParse({ nickname: 'AD钙', answers: invalidChoice }).success).toBe(false)
+  it('accepts an arbitrary exact set of 25 selected ids and matching answers', () => {
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds, answers: selectedAnswers }).success).toBe(true)
+    expect(validateSelectedAnswers(questionIds, selectedAnswers)).toBe(true)
   })
 
-  it('keeps the q01 through q25 contract even if the question module is shortened', async () => {
-    vi.resetModules()
-    vi.doMock('@/lib/questions', () => ({
-      QUESTION_SET_VERSION: 1,
-      QUESTIONS: shortenedQuestionBank,
-    }))
+  it('rejects duplicate, short, long, missing, extra and illegal selected answers', () => {
+    const shortIds = questionIds.slice(0, 24)
+    const longIds = [...questionIds, 'q75']
+    const duplicateIds = [...questionIds.slice(0, 24), questionIds[0]]
+    const missingAnswers = Object.fromEntries(questionIds.slice(0, 24).map((id) => [id, 'A']))
 
-    try {
-      const { createTestSchema: schemaWithShortenedQuestionBank } = await import('@/lib/validation')
-      const { q25: _q25, ...missingQ25 } = answers
-
-      expect(schemaWithShortenedQuestionBank.safeParse({ nickname: 'AD钙', answers }).success).toBe(true)
-      expect(schemaWithShortenedQuestionBank.safeParse({ nickname: 'AD钙', answers: missingQ25 }).success).toBe(false)
-    } finally {
-      vi.doUnmock('@/lib/questions')
-      vi.resetModules()
-    }
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds: shortIds, answers: missingAnswers }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds: longIds, answers: { ...selectedAnswers, q75: 'A' } }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds: duplicateIds, answers: selectedAnswers }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds, answers: missingAnswers }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds, answers: { ...selectedAnswers, extra: 'A' } }).success).toBe(false)
+    expect(createTestSchema.safeParse({ nickname: 'AD钙', questionIds, answers: { ...selectedAnswers, [questionIds[0]]: 'E' } }).success).toBe(false)
   })
 
   it('requires a UUID idempotency key for friend attempts', () => {

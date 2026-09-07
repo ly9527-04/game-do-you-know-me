@@ -36,6 +36,7 @@
   - Zod 请求 schema 会 trim 昵称并按 Unicode code point 限制为 1～20 个字符；答卷契约由 `FIXED_QUESTION_IDS` 明确锁定为 q01～q25 全量键集、A/B/C/D 选项，不随题库加载结果变化，朋友提交的幂等键必须为 UUID。
   - 管理令牌和分享码由安全随机字节生成；管理会话采用版本化 HMAC-SHA256，并在比较时使用 timingSafeEqual，过期边界视为无效。
   - 限流只对 `x-forwarded-for` 首个且经 IP 校验的客户端值做 HMAC；无论 RPC 返回错误还是抛出/拒绝，都统一映射为不泄露数据库详情的错误。埋点在 schema 校验成功后同样将客户端、查询构造与 insert 的异常统一映射为 `AnalyticsError`；事件名固定为八个漏斗节点，敏感 metadata 键拒绝、其他非白名单键剔除。
+  - 创建请求已改为动态 25 题契约：客户端提交固定题号顺序，Zod 校验数量、唯一性和答案键完全一致；服务端再基于活动题库验证题号存在及 `5 + 4×5` 分组配额，仓储将题号数组传入事务 RPC，不信任浏览器自行声明的组合。
 
 - **可复用答题会话与本地草稿**（`src/components/quiz/`、`src/lib/drafts.ts`、`tests/unit/QuestionCard.test.tsx`、`tests/unit/QuizSession.test.tsx`、`tests/unit/drafts.test.ts`）
   - 答题卡提供四个原生按钮、题目关联标签、`aria-pressed` 与文字化“已选”状态；进度以零补位题号和可访问进度条展示，手机端采用可触摸的手帐档案卡布局。

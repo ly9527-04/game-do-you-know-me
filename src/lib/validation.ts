@@ -1,11 +1,8 @@
 import { z } from 'zod'
 
-import { FIXED_QUESTION_IDS } from '@/types/domain'
+import type { QuizAnswers } from '@/types/domain'
 
 const answerChoiceSchema = z.enum(['A', 'B', 'C', 'D'])
-const questionAnswerShape = Object.fromEntries(
-  FIXED_QUESTION_IDS.map((questionId) => [questionId, answerChoiceSchema]),
-) as Record<(typeof FIXED_QUESTION_IDS)[number], typeof answerChoiceSchema>
 
 const nicknameSchema = z.string()
   .transform((value) => value.trim())
@@ -13,13 +10,39 @@ const nicknameSchema = z.string()
     message: 'Nickname must contain between 1 and 20 Unicode characters',
   })
 
-const answersSchema = z.object(questionAnswerShape).strict()
+const answersSchema = z.record(z.string().min(1), answerChoiceSchema)
+  .refine((answers) => Object.keys(answers).length === 25, {
+    message: 'Exactly 25 answers are required',
+  })
+
+const selectedQuestionIdsSchema = z.array(z.string().min(1))
+  .length(25)
+  .refine((questionIds) => new Set(questionIds).size === questionIds.length, {
+    message: 'Selected question ids must be unique',
+  })
+
+export function validateSelectedAnswers(
+  questionIds: readonly string[],
+  answers: unknown,
+): answers is QuizAnswers {
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return false
+  if (questionIds.length !== 25 || new Set(questionIds).size !== 25) return false
+  const entries = Object.entries(answers)
+  if (entries.length !== 25) return false
+  const selectedIds = new Set(questionIds)
+  return entries.every(([id, answer]) => selectedIds.has(id) && answerChoiceSchema.safeParse(answer).success)
+}
 
 export const createTestSchema = z.object({
   nickname: nicknameSchema,
+  questionIds: selectedQuestionIdsSchema,
   answers: answersSchema,
   anonymousSessionId: z.uuid().optional(),
-}).strict()
+}).strict().superRefine((value, context) => {
+  if (!validateSelectedAnswers(value.questionIds, value.answers)) {
+    context.addIssue({ code: 'custom', message: 'Answers must exactly match selected questions', path: ['answers'] })
+  }
+})
 
 export const createAttemptSchema = z.object({
   nickname: nicknameSchema,

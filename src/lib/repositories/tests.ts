@@ -28,6 +28,7 @@ export interface ActiveQuestionSet {
 export interface CreateTestRecordInput {
   testId: string
   questionSetId: string
+  questionIds: string[]
   nickname: string
   shareCode: string
   manageTokenHash: string
@@ -92,6 +93,7 @@ export async function createTestRecord(input: CreateTestRecordInput): Promise<st
     p_nickname: input.nickname,
     p_share_code: input.shareCode,
     p_manage_token_hash: input.manageTokenHash,
+    p_question_ids: input.questionIds,
     p_answers: input.answers,
   })
   if (error || typeof data !== 'string') throw new RepositoryError('create test')

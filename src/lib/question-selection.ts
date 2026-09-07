@@ -43,3 +43,20 @@ export function drawBalancedQuestions(
     order: index + 1,
   }))
 }
+
+export function isBalancedQuestionSelection(
+  questionIds: readonly string[],
+  questions: readonly Question[],
+): boolean {
+  if (questionIds.length !== 25 || new Set(questionIds).size !== 25) return false
+  const questionById = new Map(questions.map((question) => [question.id, question]))
+  const counts = Object.fromEntries(Object.keys(QUOTAS).map((group) => [group, 0])) as Record<QuestionPoolGroup, number>
+
+  for (const id of questionIds) {
+    const question = questionById.get(id)
+    if (!question) return false
+    counts[question.poolGroup] += 1
+  }
+
+  return (Object.entries(QUOTAS) as [QuestionPoolGroup, number][]).every(([group, quota]) => counts[group] === quota)
+}

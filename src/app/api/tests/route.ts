@@ -4,6 +4,7 @@ import { recordEvent } from '@/lib/analytics'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { createTestRecord, getActiveQuestionSet } from '@/lib/repositories/tests'
 import { createManageToken, createShareCode, hashToken } from '@/lib/security'
+import { isBalancedQuestionSelection } from '@/lib/question-selection'
 import { getCanonicalOrigin } from '@/lib/site-url'
 import { createTestSchema } from '@/lib/validation'
 
@@ -35,6 +36,9 @@ export async function POST(request: Request) {
     const origin = getCanonicalOrigin()
     const activeSet = await getActiveQuestionSet()
     if (!activeSet) throw new Error('No active question set')
+    if (!isBalancedQuestionSelection(parsed.data.questionIds, activeSet.questions)) {
+      return NextResponse.json({ error: { code: 'BAD_REQUEST', message: '题目组合不正确，请重新开始。' } }, { status: 400 })
+    }
 
     const testId = randomUUID()
     const shareCode = createShareCode()
@@ -42,6 +46,7 @@ export async function POST(request: Request) {
     await createTestRecord({
       testId,
       questionSetId: activeSet.id,
+      questionIds: parsed.data.questionIds,
       nickname: parsed.data.nickname,
       shareCode,
       manageTokenHash: hashToken(manageToken),

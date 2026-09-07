@@ -25,6 +25,7 @@ const answers = Object.fromEntries(QUESTIONS.map((question) => [question.id, 'A'
 const validTestInput = {
   testId: '10000000-0000-4000-8000-000000000001',
   questionSetId: '10000000-0000-4000-8000-000000000002',
+  questionIds: QUESTIONS.map((question) => question.id),
   nickname: 'AD钙',
   shareCode: 'share123',
   manageTokenHash: 'a'.repeat(64),
@@ -65,6 +66,7 @@ describe('test repository', () => {
         prompt: question.prompt,
         options: question.options,
         category: question.category,
+        pool_group: question.poolGroup,
         mismatch_priority: question.mismatchPriority,
       })),
     })
@@ -75,7 +77,7 @@ describe('test repository', () => {
     expect(from).toHaveBeenCalledWith('question_sets')
     expect(query.eq).toHaveBeenCalledWith('is_active', true)
     expect(result?.questions).toHaveLength(25)
-    expect(result?.questions[0]).toMatchObject({ id: 'q01', order: 1, mismatchPriority: 1 })
+    expect(result?.questions[0]).toMatchObject({ id: 'q01', order: 1, poolGroup: 'classic', mismatchPriority: 1 })
   })
 
   it('creates a test through the transactional RPC', async () => {
@@ -87,6 +89,7 @@ describe('test repository', () => {
       p_test_id: validTestInput.testId,
       p_share_code: validTestInput.shareCode,
       p_manage_token_hash: validTestInput.manageTokenHash,
+      p_question_ids: validTestInput.questionIds,
       p_answers: validTestInput.answers,
     }))
   })

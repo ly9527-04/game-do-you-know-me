@@ -23,15 +23,23 @@ vi.mock('@/lib/rate-limit', () => ({ assertRateLimit: mocks.assertRateLimit }))
 vi.mock('@/lib/analytics', () => ({ recordEvent: mocks.recordEvent }))
 vi.mock('server-only', () => ({}))
 
-import { FIXED_QUESTION_IDS } from '@/types/domain'
+import { QUESTION_POOL } from '@/lib/questions'
 import { POST } from '@/app/api/tests/route'
 
-const answers = Object.fromEntries(FIXED_QUESTION_IDS.map((id) => [id, 'A']))
+const questionIds = [
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'classic').slice(0, 5),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'daily').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'personality').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'scenario').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'relationship').slice(0, 4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'roast').slice(0, 4),
+].map((question) => question.id)
+const answers = Object.fromEntries(questionIds.map((id) => [id, 'A']))
 const anonymousSessionId = '40000000-0000-4000-8000-000000000001'
 const questionSet = {
   id: '10000000-0000-4000-8000-000000000001',
-  version: 1,
-  questions: [],
+  version: 2,
+  questions: QUESTION_POOL,
 }
 
 function request(body: unknown, headers: Record<string, string> = {}) {
@@ -60,7 +68,8 @@ afterEach(() => {
 
 describe('POST /api/tests', () => {
   it('rejects a 24-answer payload before rate limiting or persistence', async () => {
-    const response = await POST(request({ nickname: '阿钙', answers: Object.fromEntries(FIXED_QUESTION_IDS.slice(0, 24).map((id) => [id, 'A'])) }))
+    const shortIds = questionIds.slice(0, 24)
+    const response = await POST(request({ nickname: '阿钙', questionIds: shortIds, answers: Object.fromEntries(shortIds.map((id) => [id, 'A'])) }))
 
     expect(response.status).toBe(400)
     expect(mocks.assertRateLimit).not.toHaveBeenCalled()
@@ -70,14 +79,14 @@ describe('POST /api/tests', () => {
   it('returns 429 when the anonymous create limit is exceeded', async () => {
     mocks.assertRateLimit.mockRejectedValueOnce({ reason: 'exceeded' })
 
-    const response = await POST(request({ nickname: '阿钙', answers }))
+    const response = await POST(request({ nickname: '阿钙', questionIds, answers }))
 
     expect(response.status).toBe(429)
     expect(mocks.createTestRecord).not.toHaveBeenCalled()
   })
 
   it('hashes the management token and returns separated absolute URLs', async () => {
-    const response = await POST(request({ nickname: ' 阿钙 ', answers, anonymousSessionId }))
+    const response = await POST(request({ nickname: ' 阿钙 ', questionIds, answers, anonymousSessionId }))
     const body = await response.json()
 
     expect(response.status).toBe(200)
@@ -85,6 +94,7 @@ describe('POST /api/tests', () => {
       nickname: '阿钙',
       shareCode: 'share-code',
       manageTokenHash: 'hash'.repeat(16),
+      questionIds,
       answers,
     }))
     expect(body).toEqual({
@@ -102,7 +112,7 @@ describe('POST /api/tests', () => {
   it('maps persistence failures to the safe create error contract', async () => {
     mocks.createTestRecord.mockRejectedValueOnce(new Error('secret sql details'))
 
-    const response = await POST(request({ nickname: '阿钙', answers }))
+    const response = await POST(request({ nickname: '阿钙', questionIds, answers }))
 
     expect(response.status).toBe(500)
     await expect(response.json()).resolves.toEqual({ error: { code: 'CREATE_FAILED', message: '暂时没能封存档案，请稍后重试。' } })
@@ -111,9 +121,21 @@ describe('POST /api/tests', () => {
   it('rejects creation when the canonical site URL is not configured', async () => {
     delete process.env.NEXT_PUBLIC_SITE_URL
 
-    const response = await POST(request({ nickname: '阿钙', answers }))
+    const response = await POST(request({ nickname: '阿钙', questionIds, answers }))
 
     expect(response.status).toBe(500)
+    expect(mocks.createTestRecord).not.toHaveBeenCalled()
+  })
+
+  it('rejects ids that exist but do not satisfy the balanced group quotas', async () => {
+    const unbalancedIds = QUESTION_POOL.slice(0, 25).map((question) => question.id)
+    const response = await POST(request({
+      nickname: '阿钙',
+      questionIds: unbalancedIds,
+      answers: Object.fromEntries(unbalancedIds.map((id) => [id, 'A'])),
+    }))
+
+    expect(response.status).toBe(400)
     expect(mocks.createTestRecord).not.toHaveBeenCalled()
   })
 })
