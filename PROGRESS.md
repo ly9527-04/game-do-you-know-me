@@ -44,6 +44,7 @@
   - 创建者答案服务端封存后生成独立分享码和管理令牌；朋友提交时只接收公开题面，由服务端重新计分并以幂等键避免重复排行榜记录。
   - 结果页仅展示分数、预设点评和最多三道稳定错题；分享卡不包含答案或管理令牌。管理令牌交换为短期 HttpOnly 会话，排行榜仅对绑定测试可见。
   - 创建、挑战、结果、管理页面均对无效链接和数据库故障返回统一友好状态，不泄露堆栈、内部 ID 或配置细节。
+  - 排行榜记录使用“第 N 名 / 昵称 / 分数 / M月D日完成”的完整文字标签，避免手机端裸数字含义不清。
 
 - **埋点、恢复与韧性状态**（`src/app/api/events`、`src/components/analytics`、`src/components/system`、`tests/integration/events-route.test.ts`、`tests/unit/ResumeDraft.test.tsx`）
   - 八个漏斗事件通过限流后的 best-effort 接口写入，写入失败不阻塞创建、答题或分享；首页会话内的 `homepage_view` 只发送一次。

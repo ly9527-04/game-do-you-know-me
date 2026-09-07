@@ -431,6 +431,7 @@ h1 {
 
 .leaderboard__entries li {
   display: flex;
+  flex-wrap: wrap;
   min-height: 3rem;
   align-items: center;
   justify-content: space-between;
@@ -438,6 +439,10 @@ h1 {
   padding: 0.7rem 0.85rem;
   border-radius: 12px;
   background: var(--paper);
+}
+
+.leaderboard__entries li > * {
+  white-space: nowrap;
 }
 
 .leaderboard__entries li:first-child {
