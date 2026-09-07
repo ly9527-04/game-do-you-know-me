@@ -320,8 +320,8 @@ h1 {
   cursor: pointer;
 }
 
-.quiz-session__previous {
-  border-color: var(--line) !important;
+.quiz-session__navigation .quiz-session__previous {
+  border-color: var(--line);
   background: var(--surface);
   color: var(--ink);
 }
@@ -438,6 +438,10 @@ h1 {
   padding: 0.7rem 0.85rem;
   border-radius: 12px;
   background: var(--paper);
+}
+
+.leaderboard__entries li:first-child {
+  background: var(--violet-soft);
 }
 
 @media (max-width: 420px) {

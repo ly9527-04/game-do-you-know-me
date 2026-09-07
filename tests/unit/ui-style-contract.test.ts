@@ -26,4 +26,11 @@ describe('lightweight social-card visual system', () => {
     expect(css).toMatch(/\.question-card\s*\{[^}]*border-radius:\s*(?:1rem|16px|18px|20px)/i)
     expect(css).toMatch(/\.creator-start input\s*\{[^}]*min-height:\s*(?:44px|2\.75rem|3rem)/i)
   })
+
+  it('gives quiz, result, and leaderboard states clear hierarchy', () => {
+    expect(css).toMatch(/\.question-card__option\[data-selected="true"\]\s*\{[^}]*background:\s*var\(--violet-soft\)/i)
+    expect(css).toMatch(/\.result-score\s*\{[^}]*background:\s*var\(--ink\)/i)
+    expect(css).toMatch(/\.leaderboard__entries li:first-child\s*\{[^}]*background:\s*var\(--violet-soft\)/i)
+    expect(css).not.toMatch(/border-color:[^;]+!important/i)
+  })
 })
