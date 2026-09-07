@@ -2,9 +2,10 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-import { QUESTIONS } from '@/lib/questions'
+import { QUESTION_POOL, QUESTIONS } from '@/lib/questions'
 
 const migration = readFileSync(resolve('supabase/migrations/001_initial_schema.sql'), 'utf8')
+const poolMigration = readFileSync(resolve('supabase/migrations/002_random_question_pool.sql'), 'utf8')
 const seed = readFileSync(resolve('supabase/seed.sql'), 'utf8')
 
 describe('Supabase migration contract', () => {
@@ -74,6 +75,53 @@ describe('Supabase migration contract', () => {
     for (const question of QUESTIONS) {
       expect(seed).toContain(question.prompt)
       for (const option of question.options) expect(seed).toContain(option.text)
+    }
+  })
+})
+
+describe('random question pool migration contract', () => {
+  it('adds pool groups and the per-test ordered question table', () => {
+    expect(poolMigration).toMatch(/add column(?: if not exists)? pool_group text/i)
+    expect(poolMigration).toMatch(/create table(?: if not exists)? test_questions\b/i)
+    expect(poolMigration).toMatch(/unique \(test_id, position\)/i)
+    expect(poolMigration).toMatch(/foreign key \(question_set_id, question_id\)\s+references questions\(question_set_id, id\)/i)
+    expect(poolMigration).toMatch(/alter table test_questions enable row level security/i)
+  })
+
+  it('backfills the classic 25 questions for existing tests', () => {
+    expect(poolMigration).toMatch(/insert into test_questions[\s\S]+from tests t[\s\S]+join questions q[\s\S]+on conflict/i)
+  })
+
+  it('creates a version-two 75-question bank and activates it last', () => {
+    expect(poolMigration).toMatch(/values \('00000000-0000-4000-8000-000000000002', 2, false\)/i)
+    for (const question of QUESTION_POOL.slice(25)) {
+      expect(poolMigration).toContain(question.id)
+      expect(poolMigration).toContain(question.prompt)
+      for (const option of question.options) expect(poolMigration).toContain(option.text)
+    }
+    expect(poolMigration).toMatch(/update question_sets set is_active = false;[\s\S]*update question_sets set is_active = true where version = 2;\s*(?:commit;)?\s*$/i)
+  })
+
+  it('validates and stores the balanced selected ids in create_test', () => {
+    expect(poolMigration).toMatch(/create or replace function create_test\([\s\S]*p_question_ids text\[\]/i)
+    expect(poolMigration).toMatch(/cardinality\(p_question_ids\) <> 25/i)
+    expect(poolMigration).toMatch(/count\(distinct id\)[\s\S]*unnest\(p_question_ids\)/i)
+    for (const quota of ["'classic' then 5", "'daily' then 4", "'personality' then 4", "'scenario' then 4", "'relationship' then 4", "'roast' then 4"]) {
+      expect(poolMigration).toContain(quota)
+    }
+    expect(poolMigration).toMatch(/insert into test_questions[\s\S]*with ordinality/i)
+  })
+
+  it('validates attempts against test_questions and locks RPC permissions', () => {
+    expect(poolMigration).toMatch(/create or replace function create_attempt[\s\S]*(?:from|join) test_questions tq/i)
+    expect(poolMigration).toMatch(/revoke execute on function create_test\(uuid, uuid, text, text, text, text\[\], jsonb\) from public, anon, authenticated;/i)
+    expect(poolMigration).toMatch(/grant execute on function create_test\(uuid, uuid, text, text, text, text\[\], jsonb\) to service_role;/i)
+  })
+
+  it('keeps an idempotent seed contract containing q01 through q75', () => {
+    expect(seed).toMatch(/version[^;]+2/i)
+    for (let order = 1; order <= 75; order += 1) {
+      expect(seed).toContain(`q${String(order).padStart(2, '0')}`)
     }
   })
 })

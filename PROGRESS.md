@@ -23,6 +23,7 @@
   - 服务端仓储统一使用 `SUPABASE_SECRET_KEY`，将数据库 snake_case 映射为 camelCase DTO；公开测试读取列清单不包含创建者答案，数据库原始错误不会传给调用方。
   - 修复 JSONB 对象键计数兼容 PostgreSQL，并为全部 SECURITY DEFINER 函数显式撤销客户端执行权限；管理统计改由服务端聚合 RPC 返回，排行榜明细保持 score 降序、created_at 升序。
   - 题目主键改为 `(question_set_id, id)`，创建者答案和朋友答案均通过复合外键绑定测试创建时的题库版本；后续题库仍可复用 `q01`～`q25`，不会与旧测试串题。
+  - 新增向前迁移 `002_random_question_pool.sql`：v1 和旧答案原样保留，旧测试回填 25 条 `test_questions`；v2 保存完整 75 题，创建 RPC 同时校验数量、唯一性、题集归属、六组配额与答案键，并按抽取顺序原子写入每份测试的固定题单。
 
 - **产品设计**（`docs/superpowers/specs/2026-09-06-do-you-really-know-me-design.md`）
   - 已完成 MVP 范围、用户流程、视觉方向、技术架构、数据模型、安全、埋点、测试与部署设计。
