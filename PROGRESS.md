@@ -65,6 +65,7 @@
 - **部署、域名隔离与回滚文档**（`README.md`、`docs/runbooks/`、`.env.example`）
   - 发布门禁固定为安装依赖、单测、lint、typecheck、生产 build 和 E2E 全部通过；部署步骤要求使用独立 Supabase/Vercel 项目并核对活动题集为 25 题。
   - 明确新站只绑定 `me.ly0688.online`，旧提问箱的 `ly0688.online` 与 `www.ly0688.online` 不改 DNS、不改绑项目、不复用数据库；回滚采用新站 deployment 切换与数据库向前修复。
+  - 随机题库发布顺序固定为先应用数据库迁移 002、确认 v2 唯一激活且旧测试均回填 25 条题单，再发布应用；若应用需回滚，可切回上一 Vercel deployment，数据库保留 v1/v2 与回填数据，不执行破坏性降级。
 
 ## 重要细节 / 坑
 

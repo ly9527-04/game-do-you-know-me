@@ -26,6 +26,7 @@ export function CreatorQuiz({ nickname, questionSetVersion, questions }: Creator
   const draftKey = getDraftKey('creator', nickname)
 
   useEffect(() => {
+    let active = true
     const questionById = new Map(questions.map((question) => [question.id, question]))
     const draft = loadDraft(draftKey, questions.map((question) => question.id))
     const restored = draft?.questionSetVersion === questionSetVersion
@@ -45,7 +46,12 @@ export function CreatorQuiz({ nickname, questionSetVersion, questions }: Creator
         updatedAt: new Date().toISOString(),
       })
     }
-    setSelectedQuestions(ordered)
+    queueMicrotask(() => {
+      if (active) setSelectedQuestions(ordered)
+    })
+    return () => {
+      active = false
+    }
   }, [draftKey, nickname, questionSetVersion, questions])
 
   async function complete(answers: QuizAnswers) {
