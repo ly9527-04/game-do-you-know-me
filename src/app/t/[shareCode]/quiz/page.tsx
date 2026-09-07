@@ -14,5 +14,5 @@ export default async function FriendQuizRoute({ params, searchParams }: { params
     return <main className="page-shell"><h1>这张答题卡暂时打不开</h1><InlineError message="服务正在喘口气，请稍后再试。" showCreateLink /></main>
   }
   if (!test || test.questions.length !== 25 || !nickname) return <main className="page-shell"><h1>这个测试可能不存在或已失效</h1><InlineError message="请从朋友发来的原始链接重新开始。" showCreateLink /></main>
-  return <main className="page-shell"><FriendQuiz shareCode={shareCode} creatorNickname={test.creatorNickname} friendNickname={nickname} /></main>
+  return <main className="page-shell"><FriendQuiz shareCode={shareCode} creatorNickname={test.creatorNickname} friendNickname={nickname} questionSetVersion={test.questionSetVersion} questions={test.questions} /></main>
 }

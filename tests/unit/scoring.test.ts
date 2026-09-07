@@ -1,13 +1,31 @@
-import { QUESTIONS } from '@/lib/questions'
+import { QUESTION_POOL, QUESTIONS } from '@/lib/questions'
 import { getVerdict, scoreAnswers, selectMismatches } from '@/lib/scoring'
 import type { QuizAnswers } from '@/types/domain'
 
 const allA = Object.fromEntries(QUESTIONS.map((question) => [question.id, 'A'])) as QuizAnswers
 const allB = Object.fromEntries(QUESTIONS.map((question) => [question.id, 'B'])) as QuizAnswers
+const selectedQuestions = [
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'classic').slice(-5),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'daily').slice(-4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'personality').slice(-4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'scenario').slice(-4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'relationship').slice(-4),
+  ...QUESTION_POOL.filter((question) => question.poolGroup === 'roast').slice(-4),
+].map((question, index) => ({ ...question, order: index + 1 }))
 
 it('awards four points for every exact answer match', () => {
   expect(scoreAnswers(allA, allA).score).toBe(100)
   expect(scoreAnswers(allA, allB).score).toBe(0)
+})
+
+it('scores and reveals mismatches from the supplied randomized 25 questions', () => {
+  const creator = Object.fromEntries(selectedQuestions.map((question) => [question.id, 'A'])) as QuizAnswers
+  const friend = Object.fromEntries(selectedQuestions.map((question) => [question.id, 'B'])) as QuizAnswers
+  const result = scoreAnswers(creator, friend, selectedQuestions)
+
+  expect(result.score).toBe(0)
+  expect(result.comparisons.map((comparison) => comparison.questionId)).toEqual(selectedQuestions.map((question) => question.id))
+  expect(selectMismatches(result, 'random-attempt', selectedQuestions)).toHaveLength(3)
 })
 
 it('requires complete 25-answer sets', () => {

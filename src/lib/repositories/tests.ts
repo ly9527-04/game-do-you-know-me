@@ -55,10 +55,10 @@ export class RepositoryError extends Error {
   }
 }
 
-function mapQuestion(row: QuestionRow): Question {
+function mapQuestion(row: QuestionRow, order = row.sort_order): Question {
   return {
     id: row.id,
-    order: row.sort_order,
+    order,
     prompt: row.prompt,
     options: row.options,
     category: row.category,
@@ -68,7 +68,7 @@ function mapQuestion(row: QuestionRow): Question {
 }
 
 function mapQuestions(rows: QuestionRow[]): Question[] {
-  return rows.map(mapQuestion).sort((left, right) => left.order - right.order)
+  return rows.map((row) => mapQuestion(row)).sort((left, right) => left.order - right.order)
 }
 
 export async function getActiveQuestionSet(): Promise<ActiveQuestionSet | null> {
@@ -101,11 +101,11 @@ export async function createTestRecord(input: CreateTestRecordInput): Promise<st
 }
 
 export async function getPublicTest(shareCode: string): Promise<PublicTest | null> {
-  const { data, error } = await createServerDb()
+  const db = createServerDb()
+  const { data, error } = await db
     .from('tests')
-    .select('id, nickname, question_sets(version, questions(id, sort_order, prompt, options, category, pool_group, mismatch_priority))')
+    .select('id, nickname, question_set_id, question_sets(version)')
     .eq('share_code', shareCode)
-    .order('sort_order', { referencedTable: 'question_sets.questions' })
     .maybeSingle()
 
   if (error) throw new RepositoryError('get public test')
@@ -113,13 +113,23 @@ export async function getPublicTest(shareCode: string): Promise<PublicTest | nul
   const row = data as unknown as {
     id: string
     nickname: string
-    question_sets: { version: number; questions: QuestionRow[] }
+    question_set_id: string
+    question_sets: { version: number }
   }
+  const { data: selectedRows, error: selectedError } = await db
+    .from('test_questions')
+    .select('position, questions!inner(id, sort_order, prompt, options, category, pool_group, mismatch_priority)')
+    .eq('test_id', row.id)
+    .order('position', { ascending: true })
+
+  if (selectedError) throw new RepositoryError('get public test questions')
+  const questions = ((selectedRows ?? []) as unknown as { position: number; questions: QuestionRow }[])
+    .map((selected) => mapQuestion(selected.questions, selected.position))
   return {
     testId: row.id,
     creatorNickname: row.nickname,
     questionSetVersion: row.question_sets.version,
-    questions: mapQuestions(row.question_sets.questions),
+    questions,
   }
 }
 

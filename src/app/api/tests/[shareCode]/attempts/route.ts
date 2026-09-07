@@ -5,7 +5,7 @@ import { assertRateLimit } from '@/lib/rate-limit'
 import { createAttemptRecord } from '@/lib/repositories/attempts'
 import { getCreatorAnswers, getPublicTest } from '@/lib/repositories/tests'
 import { scoreAnswers } from '@/lib/scoring'
-import { createAttemptSchema } from '@/lib/validation'
+import { createAttemptSchema, validateSelectedAnswers } from '@/lib/validation'
 import { getCanonicalOrigin } from '@/lib/site-url'
 
 const MAX_BODY_BYTES = 32 * 1024
@@ -39,8 +39,9 @@ export async function POST(request: Request, context: RouteContext) {
     const origin = getCanonicalOrigin()
     const test = await getPublicTest(shareCode)
     if (!test || test.questions.length !== 25) return NextResponse.json({ error: { code: 'TEST_NOT_FOUND', message: '找不到这张测试卡。' } }, { status: 404 })
+    if (!validateSelectedAnswers(test.questions.map((question) => question.id), parsed.data.answers)) return badRequest()
     const creatorAnswers = await getCreatorAnswers(test.testId)
-    const scoreResult = scoreAnswers(creatorAnswers, parsed.data.answers)
+    const scoreResult = scoreAnswers(creatorAnswers, parsed.data.answers, test.questions)
     const attemptId = randomUUID()
     const persistedAttemptId = await createAttemptRecord({
       attemptId,

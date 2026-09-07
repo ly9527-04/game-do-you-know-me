@@ -1,15 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useId } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { QUESTIONS } from '@/lib/questions'
+
+const selectedQuestions = [...QUESTIONS].reverse().map((question, index) => ({ ...question, order: index + 1 }))
 
 const fetchMock = vi.fn()
 vi.stubGlobal('fetch', fetchMock)
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/components/analytics/EventBeacon', () => ({ EventBeacon: () => null }))
 vi.mock('@/components/quiz/QuizSession', () => ({
-  QuizSession: ({ onComplete }: { onComplete: (answers: Record<string, 'A'>) => void }) => {
+  QuizSession: ({ questions, questionSetVersion, onComplete }: { questions?: typeof selectedQuestions; questionSetVersion?: number; onComplete: (answers: Record<string, 'A'>) => void }) => {
     const id = useId()
-    return <button data-session-id={id} type="button" onClick={() => onComplete({ q01: 'A' })}>模拟完成</button>
+    return <button data-session-id={id} data-question-ids={questions?.map((question) => question.id).join(',') ?? ''} data-question-version={questionSetVersion} type="button" onClick={() => onComplete({ q01: 'A' })}>模拟完成</button>
   },
 }))
 vi.mock('@/lib/drafts', () => ({ clearDraft: vi.fn(), getDraftKey: vi.fn(() => 'friend-draft') }))
@@ -24,7 +27,10 @@ describe('FriendQuiz', () => {
     fetchMock
       .mockRejectedValueOnce(new Error('network down'))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ resultUrl: 'https://me.ly0688.online/r/attempt' }) })
-    render(<FriendQuiz shareCode="share" creatorNickname="阿钙" friendNickname="小明" />)
+    render(<FriendQuiz shareCode="share" creatorNickname="阿钙" friendNickname="小明" questionSetVersion={2} questions={selectedQuestions} />)
+
+    expect(screen.getByRole('button', { name: '模拟完成' })).toHaveAttribute('data-question-ids', selectedQuestions.map((question) => question.id).join(','))
+    expect(screen.getByRole('button', { name: '模拟完成' })).toHaveAttribute('data-question-version', '2')
 
     fireEvent.click(screen.getByRole('button', { name: '模拟完成' }))
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())

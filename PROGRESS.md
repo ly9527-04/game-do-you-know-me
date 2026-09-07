@@ -49,6 +49,7 @@
   - 结果页仅展示分数、预设点评和最多三道稳定错题；分享卡不包含答案或管理令牌。管理令牌交换为短期 HttpOnly 会话，排行榜仅对绑定测试可见。
   - 创建、挑战、结果、管理页面均对无效链接和数据库故障返回统一友好状态，不泄露堆栈、内部 ID 或配置细节。
   - 排行榜记录使用“第 N 名 / 昵称 / 分数 / M月D日完成”的完整文字标签，避免手机端裸数字含义不清。
+  - 朋友入口改为按 `test_questions.position` 读取创建时保存的 25 题，不再读取整个题集；答题组件接收该固定顺序，提交接口先核对答案键，再以同一题单服务端计分。结果错题揭晓支持新增 q26～q75，同时旧测试仍按回填的 q01～q25 工作。
 
 - **埋点、恢复与韧性状态**（`src/app/api/events`、`src/components/analytics`、`src/components/system`、`tests/integration/events-route.test.ts`、`tests/unit/ResumeDraft.test.tsx`）
   - 八个漏斗事件通过限流后的 best-effort 接口写入，写入失败不阻塞创建、答题或分享；首页会话内的 `homepage_view` 只发送一次。

@@ -95,30 +95,36 @@ describe('test repository', () => {
   })
 
   it('returns public test data without selecting or exposing creator answers', async () => {
-    const query = queryResult({
+    const identityQuery = queryResult({
       id: validTestInput.testId,
       nickname: 'AD钙',
-      question_sets: {
-        version: 1,
-        questions: QUESTIONS.map((question) => ({
+      question_set_id: validTestInput.questionSetId,
+      question_sets: { version: 1 },
+    })
+    const questionQuery = queryResult([...QUESTIONS].reverse().map((question, index) => ({
+      position: index + 1,
+      questions: {
           id: question.id,
           sort_order: question.order,
           prompt: question.prompt,
           options: question.options,
           category: question.category,
+          pool_group: question.poolGroup,
           mismatch_priority: question.mismatchPriority,
-        })),
       },
-    })
-    from.mockReturnValue(query)
+    })))
+    from.mockReturnValueOnce(identityQuery).mockReturnValueOnce(questionQuery)
 
     const result = await getPublicTest('share123')
 
-    expect(query.select.mock.calls[0][0]).not.toContain('creator_answers')
+    expect(identityQuery.select.mock.calls[0][0]).not.toContain('creator_answers')
+    expect(from).toHaveBeenNthCalledWith(2, 'test_questions')
+    expect(questionQuery.order).toHaveBeenCalledWith('position', { ascending: true })
     expect(JSON.stringify(result)).not.toContain('creator_answers')
     expect(JSON.stringify(result)).not.toContain('creatorAnswer')
     expect(result).toMatchObject({ testId: validTestInput.testId, creatorNickname: 'AD钙', questionSetVersion: 1 })
     expect(result?.questions).toHaveLength(25)
+    expect(result?.questions[0]).toMatchObject({ id: 'q25', order: 1 })
   })
 
   it('maps creator answers and management token lookup', async () => {

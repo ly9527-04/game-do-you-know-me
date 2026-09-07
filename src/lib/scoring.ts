@@ -1,5 +1,5 @@
-import { QUESTIONS } from '@/lib/questions'
-import type { Mismatch, QuizAnswers, ScoreResult } from '@/types/domain'
+import { QUESTION_POOL, QUESTIONS } from '@/lib/questions'
+import type { Mismatch, Question, QuizAnswers, ScoreResult } from '@/types/domain'
 
 const verdicts = [
   [90, '离谱，你是真的懂 TA。'],
@@ -10,23 +10,23 @@ const verdicts = [
   [0, '建议重新认识一下。'],
 ] as const
 
-const questionIds: ReadonlySet<string> = new Set(QUESTIONS.map((question) => question.id))
 const answerChoices = new Set(['A', 'B', 'C', 'D'])
 
-function isCompleteAnswerSet(answers: QuizAnswers): boolean {
+function isCompleteAnswerSet(answers: QuizAnswers, questions: readonly Question[]): boolean {
   const keys = Object.keys(answers)
+  const questionIds = new Set(questions.map((question) => question.id))
   return (
-    keys.length === QUESTIONS.length &&
+    keys.length === questions.length &&
     keys.every((key) => questionIds.has(key) && answerChoices.has(answers[key]))
   )
 }
 
-export function scoreAnswers(creator: QuizAnswers, friend: QuizAnswers): ScoreResult {
-  if (!isCompleteAnswerSet(creator) || !isCompleteAnswerSet(friend)) {
+export function scoreAnswers(creator: QuizAnswers, friend: QuizAnswers, questions: readonly Question[] = QUESTIONS): ScoreResult {
+  if (!isCompleteAnswerSet(creator, questions) || !isCompleteAnswerSet(friend, questions)) {
     throw new Error('A complete 25-answer set is required')
   }
 
-  const comparisons = QUESTIONS.map((question) => ({
+  const comparisons = questions.map((question) => ({
     questionId: question.id,
     friendAnswer: friend[question.id],
     creatorAnswer: creator[question.id],
@@ -52,11 +52,11 @@ function stableHash(value: string): number {
   return hash >>> 0
 }
 
-export function selectMismatches(result: ScoreResult, attemptId: string): Mismatch[] {
+export function selectMismatches(result: ScoreResult, attemptId: string, questions: readonly Question[] = QUESTION_POOL): Mismatch[] {
   return result.comparisons
     .filter((comparison) => !comparison.isCorrect)
     .map((comparison) => {
-      const question = QUESTIONS.find((item) => item.id === comparison.questionId)
+      const question = questions.find((item) => item.id === comparison.questionId)
       if (!question) {
         throw new Error(`Unknown question: ${comparison.questionId}`)
       }

@@ -7,15 +7,17 @@ import { QuizSession } from '@/components/quiz/QuizSession'
 import { InlineError } from '@/components/system/InlineError'
 import { clearDraft, getDraftKey } from '@/lib/drafts'
 import { getAnonymousSessionId } from '@/lib/anonymous-session'
-import type { QuizAnswers } from '@/types/domain'
+import type { Question, QuizAnswers } from '@/types/domain'
 
 type FriendQuizProps = {
   shareCode: string
   creatorNickname: string
   friendNickname: string
+  questionSetVersion: number
+  questions: readonly Question[]
 }
 
-export function FriendQuiz({ shareCode, creatorNickname, friendNickname }: FriendQuizProps) {
+export function FriendQuiz({ shareCode, creatorNickname, friendNickname, questionSetVersion, questions }: FriendQuizProps) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -47,7 +49,7 @@ export function FriendQuiz({ shareCode, creatorNickname, friendNickname }: Frien
     <>
       <EventBeacon eventName="friend_quiz_start" metadata={{ source: 'challenge', surface: 'friend_quiz' }} />
       <p className="eyebrow">你正在猜：{creatorNickname}</p>
-      <QuizSession key={`${shareCode}:${friendNickname}:${sessionRevision}`} mode={{ role: 'friend', shareCode }} subjectNickname={friendNickname} initialAnswers={{} as QuizAnswers} onComplete={complete} />
+      <QuizSession key={`${shareCode}:${friendNickname}:${sessionRevision}`} mode={{ role: 'friend', shareCode }} subjectNickname={friendNickname} questions={questions} questionSetVersion={questionSetVersion} initialAnswers={{} as QuizAnswers} onComplete={complete} />
       {submitting ? <p role="status" className="submit-status">正在记下你的答案…</p> : null}
       {error ? <InlineError message={error} retryLabel="重新提交" onRetry={() => { setError(''); setSessionRevision((revision) => revision + 1) }} /> : null}
     </>
