@@ -11,7 +11,7 @@ describe('Leaderboard', () => {
 
   it('shows entries in the supplied score order', () => {
     render(<Leaderboard creatorNickname="阿钙" challengeCount={2} averageScore={76} entries={[{ attemptId: 'a', nickname: '小明', score: 100, createdAt: '2026-09-06T08:00:00Z' }, { attemptId: 'b', nickname: '小红', score: 76, createdAt: '2026-09-06T09:00:00Z' }]} shareUrl="https://me.ly0688.online/t/share" />)
-    expect(screen.getByText('小明')).toBeInTheDocument()
+    expect(screen.getByText('昵称：小明')).toBeInTheDocument()
     expect(screen.getByText('100 分')).toBeInTheDocument()
     expect(screen.getByText('平均 76 分')).toBeInTheDocument()
   })

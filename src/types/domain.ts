@@ -13,6 +13,8 @@ export type FixedQuestionId = typeof FIXED_QUESTION_IDS[number]
 
 export type QuestionCategory = 'abstract' | 'semi_abstract' | 'real_anchor'
 
+export type QuestionPoolGroup = 'classic' | 'daily' | 'personality' | 'scenario' | 'relationship' | 'roast'
+
 export interface QuestionOption {
   readonly value: AnswerChoice
   readonly text: string
@@ -24,6 +26,7 @@ export interface Question {
   readonly prompt: string
   readonly options: readonly QuestionOption[]
   readonly category: QuestionCategory
+  readonly poolGroup: QuestionPoolGroup
   readonly mismatchPriority: number
 }
 
