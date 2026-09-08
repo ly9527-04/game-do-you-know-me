@@ -6,6 +6,7 @@ describe('ResultScore', () => {
   it('shows the score and verdict for a regular result', () => {
     render(<ResultScore score={76} verdict="很熟，但还是藏了一些你不知道的东西。" />)
     expect(screen.getByRole('heading', { name: '76 分' })).toBeInTheDocument()
+    expect(screen.getByText('答对 19 / 25 题 · 默契得分 76 分')).toBeInTheDocument()
     expect(screen.getByText('很熟，但还是藏了一些你不知道的东西。')).toBeInTheDocument()
   })
 

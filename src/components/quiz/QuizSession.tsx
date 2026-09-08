@@ -22,6 +22,7 @@ type QuizSessionStateProps = Omit<QuizSessionProps, 'mode' | 'questions' | 'ques
   draftKey: string
   questions: readonly Question[]
   questionSetVersion: number
+  isHost: boolean
 }
 
 export function QuizSession({ mode, subjectNickname, questions = QUESTIONS, questionSetVersion = 1, initialAnswers, onComplete }: QuizSessionProps) {
@@ -29,10 +30,10 @@ export function QuizSession({ mode, subjectNickname, questions = QUESTIONS, ques
   const draftMode: DraftMode = typeof mode === 'string' ? mode : 'friend'
   const draftKey = getDraftKey(draftMode, draftIdentity)
 
-  return <QuizSessionState key={draftKey} draftKey={draftKey} subjectNickname={subjectNickname} questions={questions} questionSetVersion={questionSetVersion} initialAnswers={initialAnswers} onComplete={onComplete} />
+  return <QuizSessionState key={draftKey} draftKey={draftKey} isHost={mode === 'creator'} subjectNickname={subjectNickname} questions={questions} questionSetVersion={questionSetVersion} initialAnswers={initialAnswers} onComplete={onComplete} />
 }
 
-function QuizSessionState({ draftKey, subjectNickname, questions, questionSetVersion, initialAnswers, onComplete }: QuizSessionStateProps) {
+function QuizSessionState({ draftKey, isHost, subjectNickname, questions, questionSetVersion, initialAnswers, onComplete }: QuizSessionStateProps) {
   const lastIndex = questions.length - 1
   const questionIds = useMemo(() => questions.map((question) => question.id), [questions])
   const completionRef = useRef(false)
@@ -137,12 +138,22 @@ function QuizSessionState({ draftKey, subjectNickname, questions, questionSetVer
 
   return (
     <section className="quiz-session" aria-label={`${subjectNickname}的答题卡`} aria-busy={!isReady}>
+      <header className="quiz-header">
+        <p className="eyebrow">{isHost ? 'HOST SETUP · 房主出题' : 'GAME QUIZ · 默契挑战'}</p>
+        <h1 className="gradient-text">{isHost ? '创建你的专属问卷' : '看看你有多懂 TA'}</h1>
+        <div className="quiz-player">
+          <span className="player-avatar" aria-hidden="true">{Array.from(subjectNickname)[0]}</span>
+          <div><strong>{subjectNickname}</strong><span>{isHost ? '选出真实的你，交给朋友来猜' : '跟着直觉，选出你心中的答案'}</span></div>
+          <i className="fa-solid fa-gamepad" aria-hidden="true" />
+        </div>
+      </header>
       <QuizProgress current={currentIndex + 1} total={questions.length} />
       <QuestionCard question={question} value={answers[question.id]} onSelect={selectAnswer} disabled={isLocked} />
       <nav className="quiz-session__navigation" aria-label="题目导航">
         <button className="quiz-session__previous" type="button" onClick={goPrevious} disabled={isLocked || currentIndex === 0}>上一题</button>
         <button className="quiz-session__next" type="button" onClick={goNext} disabled={isLocked || !canContinue || isLastQuestion}>下一题</button>
       </nav>
+      <p className="quiz-session__hint"><i className="fa-solid fa-bolt" aria-hidden="true" /> 选择后自动下一题 · 进度自动保存</p>
     </section>
   )
 }

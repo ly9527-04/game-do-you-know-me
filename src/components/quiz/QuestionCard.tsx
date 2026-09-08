@@ -33,7 +33,7 @@ export function QuestionCard({ question, value, onSelect, disabled }: QuestionCa
             >
               <span className="question-card__letter" aria-hidden="true">{option.value}</span>
               <span className="question-card__option-text">{option.text}</span>
-              {selected ? <span className="question-card__selected">已选</span> : null}
+              {selected ? <span className="question-card__selected"><i className="fa-solid fa-check" aria-hidden="true" /> 已选</span> : <i className="fa-solid fa-chevron-right option-chevron" aria-hidden="true" />}
             </button>
           )
         })}
