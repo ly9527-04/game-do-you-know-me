@@ -1,6 +1,6 @@
 # 你真的懂我吗
 
-一个移动端优先的朋友认知偏差测试：创建者回答固定 25 道题，朋友通过分享链接猜答案，完成后获得默契分、少量错题和创建者排行榜。
+移动端优先的朋友默契测试。注册/登录后，通过朋友的八位账号做测试；从75道题中自选25道创建自己的测试；查看自己的排行榜。结果默认展示3处差异，可展开全部。
 
 ## 本地运行
 
@@ -10,34 +10,27 @@ copy .env.example .env.local
 npm run dev
 ```
 
-本地页面默认在 `http://127.0.0.1:3000`。真实数据功能需要把 `.env.local` 指向专用的 Supabase 项目；不要填写旧提问箱使用的项目凭据。
+本地需独立Supabase数据库；NEXT_PUBLIC_SITE_URL必须与实际访问origin一致。初始化和已有站点升级顺序见[账号版发布说明](docs/runbooks/account-release.md)。不要使用旧提问箱的凭据。
 
-## 发布前检查
-
-任何一项失败都停止发布：
+## 验证
 
 ```bash
-npm ci
 npm run test:run
 npm run lint
 npm run typecheck
 npm run build
-npm run test:e2e
 ```
 
-E2E 默认只运行不依赖数据库的可访问性测试；完整创建/挑战/管理闭环需要显式设置 `E2E_TEST_READY=1`，并使用独立的预览数据库。运行浏览器验收前安装测试浏览器：
+测试包括内存PostgreSQL事务验证。浏览器夹具、专用Supabase E2E与发布门禁见[账号版发布说明](docs/runbooks/account-release.md)。真实数据库E2E仅在专用环境开启E2E_TEST_READY=1。
 
-```bash
-npx playwright install chromium webkit
-```
+## 数据规则
+
+名字、唯一8位数字账号、至少8位密码；第一版不支持找回密码。每人一份当前测试，每位朋友对同一份测试提交一次。重建前明确提醒，新答卷成功保存时才清空旧测试与旧排行榜。旧匿名分享/管理入口停用，已有匿名记录保留，不自动认领。
 
 ## 域名边界
 
-新站只绑定 `me.ly0688.online`。原提问箱继续使用 `ly0688.online` 和 `www.ly0688.online`，不得在新项目中删除、改绑、重定向或复用它们的 Vercel 项目、GitHub 仓库和数据库。
+仅使用me.ly0688.online。原提问箱ly0688.online、www.ly0688.online及其项目和数据库保持独立。
 
-## 部署与回滚
-
-- [部署 runbook](docs/runbooks/deploy.md)
-- [回滚 runbook](docs/runbooks/rollback.md)
-
-管理链接只在创建完成时展示一次；管理令牌仅以哈希写入新数据库，丢失后 MVP 不提供账号找回。
+- [账号版部署与回滚规则](docs/runbooks/account-release.md)
+- [历史部署记录](docs/runbooks/deploy.md)
+- [回滚说明](docs/runbooks/rollback.md)

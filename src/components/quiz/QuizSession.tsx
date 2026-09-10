@@ -10,6 +10,7 @@ import type { AnswerChoice, Question, QuizAnswers } from '@/types/domain'
 export type QuizMode = 'creator' | { role: 'friend'; shareCode: string }
 
 export type QuizSessionProps = {
+  draftIdentity?: string
   mode: QuizMode
   subjectNickname: string
   questions?: readonly Question[]
@@ -25,8 +26,8 @@ type QuizSessionStateProps = Omit<QuizSessionProps, 'mode' | 'questions' | 'ques
   isHost: boolean
 }
 
-export function QuizSession({ mode, subjectNickname, questions = QUESTIONS, questionSetVersion = 1, initialAnswers, onComplete }: QuizSessionProps) {
-  const draftIdentity = typeof mode === 'string' ? subjectNickname : mode.shareCode
+export function QuizSession({ mode, subjectNickname, questions = QUESTIONS, questionSetVersion = 1, initialAnswers, onComplete, draftIdentity: explicitIdentity }: QuizSessionProps) {
+  const draftIdentity = explicitIdentity ?? (typeof mode === 'string' ? subjectNickname : mode.shareCode)
   const draftMode: DraftMode = typeof mode === 'string' ? mode : 'friend'
   const draftKey = getDraftKey(draftMode, draftIdentity)
 

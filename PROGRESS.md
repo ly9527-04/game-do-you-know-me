@@ -2,7 +2,22 @@
 
 ## 项目概览
 
-「你真的懂我吗」是一个移动端优先的朋友认知偏差测试网站：创建者从 75 题池均衡抽取 25 题作答并分享链接，朋友猜测同一份题单，完成后获得默契度和少量错题揭晓；创建者通过独立管理链接查看排行榜。
+「你真的懂我吗」是账号制朋友默契测试：注册/登录后，通过8位账号做朋友测试，从75题中自选25题创建自己的测试，查看自己的排行榜；结果默认3处差异，可展开全部。
+
+## 当前迭代：账号与自由选题（2026-09-10～11）
+
+- 认证模块：src/lib/auth.ts、passwords.ts、auth-validation.ts与api/auth三条路由。唯一八位数字账号保留前导零，昵称1–20字符、密码8–128字符；scrypt哈希、30天HttpOnly会话、退出撤销、来源与账号/IP限流。暂不找回密码。
+- 账号业务：src/lib/repositories/accounts.ts、account-test-validation.ts、api/account下创建与提交路由。会话决定身份，请求额外携带expectedUserId用于拒绝其他标签页切换账号后的旧页面提交。
+- 数据迁移003：user_accounts/user_sessions、tests.owner_id、attempts.user_id；一人一份当前测试、一人每份测试一次作答。replace_account_test事务完成覆盖与清榜，旧测试ID并发比对，成功请求重试不再清榜；submit_account_attempt在数据库计分并返回唯一成绩。
+- 界面：src/components/account中的AuthForm、Dashboard、TestBuilder、AccountQuiz、FriendSearch；首页三个入口。question-groups.ts把75题分成7类，任意选25题后回答。覆盖前警告与取消，成功保存才替换。草稿按用户、题库与测试隔离。
+- 结果及权限：MismatchList默认3条/展开全部；r与api/results先检查参与者或创建者权限；leaderboard只从当前用户查找测试。朋友读取遇到重建导致题单不完整时显示重新查找提示。
+- 旧入口：api/tests、api/manage、m和结果OG返回410；旧t/manage页面返回官网。旧匿名数据留在库中，不按昵称认领。
+- 初始化修复：seed.sql在新库迁移完成后补齐v2经典25题，避免只有50题。现有版本化题面不覆盖。
+- 最终验证（2026-09-11）：39个测试文件、192项测试全部通过，含真实密码散列、内存PostgreSQL迁移/事务9项与两项并发问题回归。Lint、typecheck、生产build均退出0。只读复审通过，无剩余具体问题。
+- 浏览器：真实本机Next登录与未登录拦截、隔离React业务组件已检查320/390/1280宽度，共21张截图；自由选题、刷新到第8题、失败重试及展开25条差异通过，无横向溢出与页面JS错误。保存接口为夹具模拟，不等于真实Supabase E2E。
+- 分支codex/account-tests。尚未执行线上003迁移、推送或发布。上线前按docs/runbooks/account-release.md在专用Supabase预览验证完整闭环。
+
+以下为历史版本记录；其中“无需注册”“随机配额”“最多三条”“分享/管理链接”规则已被本次迭代替代。
 
 ## 当前迭代：赛博霓虹 UI（2026-09-09）
 

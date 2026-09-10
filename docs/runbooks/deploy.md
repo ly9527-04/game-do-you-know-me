@@ -1,5 +1,7 @@
 # 你真的懂我吗：部署 runbook
 
+> 本文为匿名版本历史流程。账号版必须使用 [account-release.md](account-release.md)，包括003迁移、自由选题、登录验证及账号版回滚限制。
+
 这份流程只用于新站 `me.ly0688.online`。它与旧提问箱完全隔离，任何步骤都不应操作 `ly0688.online` 或 `www.ly0688.online`。
 
 ## 1. 发布前门禁

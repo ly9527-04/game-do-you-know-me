@@ -1,63 +1,34 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => ({
-  getResultSource: vi.fn(),
-  getVerdict: vi.fn(),
-  selectMismatches: vi.fn(),
-}))
-vi.mock('@/lib/repositories/attempts', () => ({ getResultSource: mocks.getResultSource }))
-vi.mock('@/lib/scoring', () => ({ getVerdict: mocks.getVerdict, selectMismatches: mocks.selectMismatches }))
+import { beforeEach, it, expect, vi } from 'vitest'
+const mocks = vi.hoisted(() => ({ user: vi.fn(), allowed: vi.fn(), source: vi.fn() }))
+vi.mock('@/lib/auth', () => ({ getCurrentUser: mocks.user }))
+vi.mock('@/lib/repositories/accounts', () => ({ canReadResult: mocks.allowed, AccountTestError: class extends Error {} }))
+vi.mock('@/lib/repositories/attempts', () => ({ getResultSource: mocks.source }))
 vi.mock('server-only', () => ({}))
-
 import { GET } from '@/app/api/results/[attemptId]/route'
-
 const attemptId = '30000000-0000-4000-8000-000000000001'
-const source = {
-  attemptId,
-  creatorNickname: '阿钙',
-  friendNickname: '小明',
-  score: 76,
-  comparisons: Array.from({ length: 25 }, (_, index) => ({ questionId: `q${String(index + 1).padStart(2, '0')}`, creatorAnswer: 'A', friendAnswer: index < 6 ? 'B' : 'A', isCorrect: index >= 6 })),
-}
-
+function get() { return GET(new Request('https://me.ly0688.online/api/results/' + attemptId), { params: Promise.resolve({ attemptId }) }) }
 beforeEach(() => {
-  vi.clearAllMocks()
-  mocks.getResultSource.mockResolvedValue(source)
-  mocks.getVerdict.mockReturnValue('很熟，但还是藏了一些你不知道的东西。')
-  mocks.selectMismatches.mockReturnValue([
-    { questionId: 'q01', prompt: '一', creatorAnswer: 'A', creatorAnswerText: '甲', friendAnswer: 'B', friendAnswerText: '乙' },
-    { questionId: 'q02', prompt: '二', creatorAnswer: 'A', creatorAnswerText: '甲', friendAnswer: 'B', friendAnswerText: '乙' },
-    { questionId: 'q03', prompt: '三', creatorAnswer: 'A', creatorAnswerText: '甲', friendAnswer: 'B', friendAnswerText: '乙' },
-  ])
+  vi.clearAllMocks(); mocks.user.mockResolvedValue({ id: 'u' }); mocks.allowed.mockResolvedValue(true)
+  mocks.source.mockResolvedValue({ creatorNickname: '甲', friendNickname: '乙', score: 0, comparisons: Array.from({length:25},(_,i)=>({questionId:'q'+String(i+1).padStart(2,'0'), creatorAnswer:'A',friendAnswer:'B',isCorrect:false})) })
 })
-
-describe('GET /api/results/:attemptId', () => {
-  it('returns at most three mismatches and never serializes full comparisons', async () => {
-    const response = await GET(new Request(`https://me.ly0688.online/api/results/${attemptId}`), { params: Promise.resolve({ attemptId }) })
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(response.headers.get('cache-control')).toBe('private, no-store')
-    expect(body).toMatchObject({ creatorNickname: '阿钙', friendNickname: '小明', score: 76, verdict: '很熟，但还是藏了一些你不知道的东西。' })
-    expect(body.mismatches).toHaveLength(3)
-    expect(JSON.stringify(body)).not.toContain('comparisons')
-    expect(JSON.stringify(body)).not.toContain('q25')
-  })
-
-  it('keeps two mismatches and returns the perfect-score easter egg', async () => {
-    mocks.getResultSource.mockResolvedValue({ ...source, score: 100 })
-    mocks.getVerdict.mockReturnValue('离谱，你是真的懂 TA。')
-    mocks.selectMismatches.mockReturnValue([])
-
-    const response = await GET(new Request(`https://me.ly0688.online/api/results/${attemptId}`), { params: Promise.resolve({ attemptId }) })
-    const body = await response.json()
-
-    expect(body).toMatchObject({ score: 100, verdict: '离谱，你是真的懂 TA。', mismatches: [] })
-  })
-
-  it('returns 404 when an attempt does not exist', async () => {
-    mocks.getResultSource.mockResolvedValue(null)
-    const response = await GET(new Request(`https://me.ly0688.online/api/results/${attemptId}`), { params: Promise.resolve({ attemptId }) })
-    expect(response.status).toBe(404)
-  })
+it('requires login before reading result data', async () => {
+  mocks.user.mockResolvedValue(null)
+  expect((await get()).status).toBe(401)
+  expect(mocks.source).not.toHaveBeenCalled()
+})
+it('rejects unrelated users before fetching answers', async () => {
+  mocks.allowed.mockResolvedValue(false)
+  expect((await get()).status).toBe(404)
+  expect(mocks.source).not.toHaveBeenCalled()
+})
+it('returns all mismatches to the authorized reader without caching', async () => {
+  const response = await get()
+  expect(response.headers.get('cache-control')).toBe('private, no-store')
+  const body = await response.json()
+  expect(body.mismatches).toHaveLength(25)
+  expect(body.comparisons).toBeUndefined()
+})
+it('returns 404 for replaced results', async () => {
+  mocks.source.mockResolvedValue(null)
+  expect((await get()).status).toBe(404)
 })

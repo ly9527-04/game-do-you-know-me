@@ -1,34 +1,24 @@
 import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { vi, beforeEach, it, expect } from 'vitest'
 import { QUESTION_POOL } from '@/lib/questions'
-
-const { getActiveQuestionSet } = vi.hoisted(() => ({ getActiveQuestionSet: vi.fn() }))
-
-vi.mock('@/lib/repositories/tests', () => ({ getActiveQuestionSet }))
-vi.mock('@/components/create/CreatorQuiz', () => ({
-  CreatorQuiz: ({ nickname, questionSetVersion, questions }: { nickname: string; questionSetVersion: number; questions: unknown[] }) => (
-    <div>{nickname} · v{questionSetVersion} · {questions.length}题</div>
-  ),
-}))
-vi.mock('server-only', () => ({}))
-
+const mocks = vi.hoisted(() => ({ user: vi.fn(), active: vi.fn(), owned: vi.fn(), redirect: vi.fn() }))
+vi.mock('@/lib/auth', () => ({ requireUser: mocks.user }))
+vi.mock('@/lib/repositories/tests', () => ({ getActiveQuestionSet: mocks.active }))
+vi.mock('@/lib/repositories/accounts', () => ({ getOwnedTest: mocks.owned }))
+vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
+vi.mock('@/components/account/TestBuilder', () => ({ TestBuilder: ({ nickname, questions }: { nickname: string; questions: unknown[] }) => <div>{nickname} · {questions.length}题</div> }))
+import CreatePage from '@/app/create/page'
 import CreatorQuizPage from '@/app/create/quiz/page'
-
 beforeEach(() => {
-  getActiveQuestionSet.mockResolvedValue({ id: 'set-v2', version: 2, questions: QUESTION_POOL })
+  mocks.user.mockResolvedValue({ id: 'u', nickname: '小明', account: '00123456' })
+  mocks.active.mockResolvedValue({ id: 's', version: 2, questions: QUESTION_POOL })
+  mocks.owned.mockResolvedValue(null)
 })
-
-describe('CreatorQuizPage', () => {
-  it('loads and passes the active complete question pool to the creator quiz', async () => {
-    render(await CreatorQuizPage({ searchParams: Promise.resolve({ nickname: '阿钙' }) }))
-
-    expect(screen.getByText('阿钙 · v2 · 75题')).toBeInTheDocument()
-  })
-
-  it('shows a friendly state when the active question pool is unavailable', async () => {
-    getActiveQuestionSet.mockResolvedValueOnce(null)
-    render(await CreatorQuizPage({ searchParams: Promise.resolve({ nickname: '阿钙' }) }))
-
-    expect(screen.getByRole('heading', { name: '题目还没准备好' })).toBeInTheDocument()
-  })
+it('uses signed-in identity and offers the entire pool', async () => {
+  render(await CreatePage())
+  expect(screen.getByText('小明 · 75题')).toBeInTheDocument()
+})
+it('redirects old quiz entry to the selection flow', () => {
+  CreatorQuizPage()
+  expect(mocks.redirect).toHaveBeenCalledWith('/create')
 })

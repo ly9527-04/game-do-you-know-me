@@ -52,7 +52,7 @@ function stableHash(value: string): number {
   return hash >>> 0
 }
 
-export function selectMismatches(result: ScoreResult, attemptId: string, questions: readonly Question[] = QUESTION_POOL): Mismatch[] {
+export function selectMismatches(result: ScoreResult, attemptId: string, questions: readonly Question[] = QUESTION_POOL, limit = 3): Mismatch[] {
   return result.comparisons
     .filter((comparison) => !comparison.isCorrect)
     .map((comparison) => {
@@ -66,7 +66,7 @@ export function selectMismatches(result: ScoreResult, attemptId: string, questio
     .sort((left, right) =>
       right.question.mismatchPriority - left.question.mismatchPriority || left.tieBreaker - right.tieBreaker,
     )
-    .slice(0, 3)
+    .slice(0, limit)
     .map(({ comparison, question }) => ({
       questionId: question.id,
       prompt: question.prompt,

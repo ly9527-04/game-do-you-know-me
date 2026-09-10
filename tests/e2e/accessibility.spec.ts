@@ -1,20 +1,14 @@
-import { expect, test } from './fixtures'
-
-test('320px creator quiz stays keyboard accessible and avoids horizontal overflow', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 640 })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/create')
-  await page.getByRole('textbox', { name: '你的昵称' }).fill('键盘测试')
-  await page.getByRole('button', { name: '开始答题' }).click()
-  await expect(page.locator('.quiz-progress__count')).toHaveText('01 / 25')
-  await expect(page.getByRole('button', { name: /^[A-D]：/ })).toHaveCount(4)
-
-  const firstOption = page.getByRole('button', { name: /^A：/ })
-  await firstOption.focus()
-  await page.keyboard.press('Enter')
-  await expect(firstOption).toHaveAttribute('aria-pressed', 'true')
-  const outlineStyle = await firstOption.evaluate((element) => getComputedStyle(element).outlineStyle)
-  await expect(outlineStyle).not.toBe('none')
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
-  await expect(overflow).toBeLessThanOrEqual(0)
+import { test,expect } from './fixtures'
+test('320px login and registration support keyboard and avoid overflow',async({page})=>{
+  await page.setViewportSize({width:320,height:700})
+  await page.goto('/')
+  const account=page.getByLabel('8位数字账号')
+  await account.focus()
+  await page.keyboard.type('00123456')
+  await expect(account).toHaveValue('00123456')
+  await page.getByRole('button',{name:'注册',exact:true}).click()
+  await expect(page.getByLabel('确认密码',{exact:true})).toBeVisible()
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+  await page.getByRole('button',{name:'注册并进入'}).focus()
+  expect(await page.getByRole('button',{name:'注册并进入'}).evaluate(el=>getComputedStyle(el).outlineStyle)).not.toBe('none')
 })

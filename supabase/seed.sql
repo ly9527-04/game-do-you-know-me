@@ -36,6 +36,13 @@ on conflict (question_set_id, id) do update set
   category = excluded.category,
   mismatch_priority = excluded.mismatch_priority;
 
+-- Backfill v2 classic rows after a fresh reset (migrations run before seeds).
+insert into questions(id, question_set_id, sort_order, prompt, options, category, pool_group, mismatch_priority)
+select id, '00000000-0000-4000-8000-000000000002', sort_order, prompt, options, category, 'classic', mismatch_priority
+from questions
+where question_set_id = '00000000-0000-4000-8000-000000000001'
+on conflict (question_set_id, id) do nothing;
+
 -- Migration 002 owns the version-two question rows. A reset runs migrations before
 -- this seed, so verify the complete contract instead of duplicating the 75 prompts.
 do $$

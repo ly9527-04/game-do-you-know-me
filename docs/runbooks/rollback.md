@@ -1,5 +1,7 @@
 # 你真的懂我吗：回滚 runbook
 
+> 账号版新增限制：不得回滚到无登录鉴权的匿名构建；这会恢复公开结果访问。只能回退到兼容账号的已验证构建，或暂停新站流量后向前修复。详见 [account-release.md](account-release.md)。
+
 回滚范围只包括 `me.ly0688.online` 对应的新 Vercel 部署。旧提问箱 `ly0688.online`、`www.ly0688.online`、旧 GitHub 仓库和旧数据库不需要、也禁止操作。
 
 ## 应用异常
