@@ -13,7 +13,7 @@
 - 全新数据库兼容：迁移阶段允许尚未seed的50题v2生成95题v3，随后`seed.sql`先补齐v2经典题、再幂等补齐v3并严格断言120题，最终只激活version=3。
 - 数据库验证：迁移契约与PGlite共25项通过；确认v2=75且inactive、v3=120且active、旧测试仍绑定v2并保留25道固定题，q76～q120数据库内容与静态题库逐字段一致。
 - 旧随机模块兼容：历史匿名流程的六组均衡配额改为`QuestionPoolGroup`的部分映射，只承认原classic/daily/personality/scenario/relationship/roast六组，不把新增可见分类误纳入旧算法。
-- 发布前验证：本轮4个定向测试文件共32项通过，旧随机抽题模块3项通过；lint、typecheck和production build退出0。首次build受Next.js遥测配置跨盘重命名影响，单次禁用遥测后构建成功，未改项目配置。
+- 发布前验证：本轮5个定向测试文件共35项通过，完整套件39个文件196项通过；lint、typecheck和production build退出0。首次build受Next.js遥测配置跨盘重命名影响，单次禁用遥测后构建成功，未改项目配置。
 
 ## 当前迭代：账号与自由选题（2026-09-10～11）
 

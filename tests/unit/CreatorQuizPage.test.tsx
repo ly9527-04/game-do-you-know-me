@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 it('uses signed-in identity and offers the entire pool', async () => {
   render(await CreatePage())
-  expect(screen.getByText('小明 · 75题')).toBeInTheDocument()
+  expect(screen.getByText('小明 · 120题')).toBeInTheDocument()
 })
 it('redirects old quiz entry to the selection flow', () => {
   CreatorQuizPage()
