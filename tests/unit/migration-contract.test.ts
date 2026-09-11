@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
@@ -6,6 +6,8 @@ import { QUESTION_POOL, QUESTIONS } from '@/lib/questions'
 
 const migration = readFileSync(resolve('supabase/migrations/001_initial_schema.sql'), 'utf8')
 const poolMigration = readFileSync(resolve('supabase/migrations/002_random_question_pool.sql'), 'utf8')
+const v3MigrationPath = resolve('supabase/migrations/004_question_bank_v3.sql')
+const v3Migration = existsSync(v3MigrationPath) ? readFileSync(v3MigrationPath, 'utf8') : ''
 const seed = readFileSync(resolve('supabase/seed.sql'), 'utf8')
 
 describe('Supabase migration contract', () => {
@@ -94,7 +96,7 @@ describe('random question pool migration contract', () => {
 
   it('creates a version-two 75-question bank and activates it last', () => {
     expect(poolMigration).toMatch(/values \('00000000-0000-4000-8000-000000000002', 2, false\)/i)
-    for (const question of QUESTION_POOL.slice(25)) {
+    for (const question of QUESTION_POOL.slice(25, 75)) {
       expect(poolMigration).toContain(question.id)
       expect(poolMigration).toContain(question.prompt)
       for (const option of question.options) expect(poolMigration).toContain(option.text)
@@ -123,5 +125,23 @@ describe('random question pool migration contract', () => {
     for (let order = 1; order <= 75; order += 1) {
       expect(seed).toContain(`q${String(order).padStart(2, '0')}`)
     }
+  })
+})
+
+describe('version three question bank migration contract', () => {
+  it('creates and activates a complete immutable version-three bank', () => {
+    expect(v3Migration).toContain('00000000-0000-4000-8000-000000000003')
+    expect(v3Migration).toMatch(/version[^;]*3/i)
+    for (let order = 76; order <= 120; order += 1) {
+      expect(v3Migration).toContain(`'q${order}'`)
+    }
+    expect(v3Migration).toMatch(/count\(\*\)[\s\S]*<> 120/i)
+    expect(v3Migration).toMatch(/update question_sets set is_active = false/i)
+    expect(v3Migration).toMatch(/update question_sets set is_active = true where version = 3/i)
+  })
+
+  it('keeps seed initialization on version three after all migrations', () => {
+    expect(seed).toMatch(/version = 3/i)
+    expect(seed).toMatch(/actual_count <> 120/i)
   })
 })

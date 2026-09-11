@@ -70,4 +70,28 @@ begin
 end;
 $$;
 
-update question_sets set is_active = (version = 2);
+-- A fresh reset runs all migrations before this seed. Once v2's classic rows are
+-- restored above, mirror any missing rows into v3 without changing existing data.
+insert into questions(id, question_set_id, sort_order, prompt, options, category, pool_group, mismatch_priority)
+select id, '00000000-0000-4000-8000-000000000003', sort_order, prompt, options, category, pool_group, mismatch_priority
+from questions
+where question_set_id = '00000000-0000-4000-8000-000000000002'
+on conflict (question_set_id, id) do nothing;
+
+do $$
+declare
+  actual_count integer;
+begin
+  select count(*) into actual_count
+  from questions q
+  join question_sets qs on qs.id = q.question_set_id
+  where qs.version = 3;
+
+  if actual_count <> 120 then
+    raise exception 'Version three question pool is incomplete';
+  end if;
+end;
+$$;
+
+update question_sets set is_active = false;
+update question_sets set is_active = true where version = 3;

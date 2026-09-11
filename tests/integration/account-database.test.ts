@@ -3,15 +3,27 @@ import { PGlite } from '@electric-sql/pglite'
 import { readFileSync } from 'node:fs'
 import { randomUUID, randomBytes } from 'node:crypto'
 import { beforeAll, afterAll, it, expect } from 'vitest'
+import { QUESTION_POOL } from '@/lib/questions'
 let db: PGlite
-const setId = '00000000-0000-4000-8000-000000000002'
+const v2SetId = '00000000-0000-4000-8000-000000000002'
+const setId = '00000000-0000-4000-8000-000000000003'
+const legacyOwnerId = '10000000-0000-4000-8000-000000000001'
+const legacyTestId = '20000000-0000-4000-8000-000000000001'
 const ids = Array.from({length:25}, (_,i) => 'q' + String(i+1).padStart(2,'0'))
 const answers = Object.fromEntries(ids.map(id => [id,'A']))
 let nextAccount = 100
 beforeAll(async () => {
   db = new PGlite()
   await db.exec('create role anon; create role authenticated; create role service_role bypassrls;')
-  for (const path of ['supabase/migrations/001_initial_schema.sql','supabase/migrations/002_random_question_pool.sql','supabase/migrations/003_account_tests.sql','supabase/seed.sql']) await db.exec(readFileSync(path,'utf8'))
+  for (const path of ['supabase/migrations/001_initial_schema.sql','supabase/migrations/002_random_question_pool.sql','supabase/migrations/003_account_tests.sql']) await db.exec(readFileSync(path,'utf8'))
+  await db.query('insert into user_accounts(id,account,nickname,password_hash) values($1,$2,$3,$4)', [legacyOwnerId,'00000001','旧测试主人','test-only-hash'])
+  await db.query('insert into tests(id,question_set_id,nickname,share_code,manage_token_hash,owner_id) values($1,$2,$3,$4,$5,$6)', [legacyTestId,v2SetId,'旧测试主人','legacy-v2-code','a'.repeat(64),legacyOwnerId])
+  await db.query(`
+    insert into test_questions(test_id, question_set_id, question_id, position)
+    select $1, $2, id, row_number() over (order by sort_order) from questions
+    where question_set_id = $2 and sort_order between 26 and 50
+  `, [legacyTestId,v2SetId])
+  for (const path of ['supabase/migrations/004_question_bank_v3.sql','supabase/seed.sql']) await db.exec(readFileSync(path,'utf8'))
 }, 60000)
 afterAll(async () => { await db?.close() })
 async function user() {
@@ -28,6 +40,34 @@ async function attempt(friend: string, test: string, value: unknown = answers) {
   const result = await db.query<{id:string}>('select submit_account_attempt($1,$2,$3) as id',[friend,test,value])
   return result.rows[0].id
 }
+it('activates v3 with 120 exact questions while preserving v2 tests', async () => {
+  const sets = await db.query<{version:number;is_active:boolean;questions:number}>(`
+    select version, is_active, count(q.id)::int as questions
+    from question_sets s join questions q on q.question_set_id=s.id
+    group by version, is_active order by version
+  `)
+  expect(sets.rows).toEqual(expect.arrayContaining([
+    { version: 2, is_active: false, questions: 75 },
+    { version: 3, is_active: true, questions: 120 },
+  ]))
+
+  const legacy = await db.query<{question_set_id:string}>('select question_set_id from tests where id=$1', [legacyTestId])
+  expect(legacy.rows[0].question_set_id).toBe(v2SetId)
+  expect((await db.query('select question_id from test_questions where test_id=$1', [legacyTestId])).rows).toHaveLength(25)
+
+  const v3Rows = await db.query<{id:string;sort_order:number;prompt:string;options:{value:string;text:string}[];pool_group:string;mismatch_priority:number}>(`
+    select id, sort_order, prompt, options, pool_group, mismatch_priority
+    from questions where question_set_id=$1 and sort_order >= 76 order by sort_order
+  `, [setId])
+  expect(v3Rows.rows).toEqual(QUESTION_POOL.slice(75).map(question => ({
+    id: question.id,
+    sort_order: question.order,
+    prompt: question.prompt,
+    options: question.options.map(option => ({ ...option })),
+    pool_group: question.poolGroup,
+    mismatch_priority: question.mismatchPriority,
+  })))
+})
 it('preserves leading zero accounts and rejects duplicates and non-eight digits', async () => {
   await db.query("insert into user_accounts(account,nickname,password_hash) values('00123456','甲','test')")
   expect((await db.query<{account:string}>("select account from user_accounts where account='00123456'")).rows[0].account).toBe('00123456')
