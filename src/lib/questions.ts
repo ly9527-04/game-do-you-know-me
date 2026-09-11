@@ -97,6 +97,58 @@ const NEW_QUESTIONS = [
   { id: 'q73', order: 73, prompt: '我喝多以后最可能变成？', options: options('话痨', '安静', '疯狂找人聊天', '开始干抽象的事'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 2 },
   { id: 'q74', order: 74, prompt: '如果我突然发财，我最可能膨胀在哪？', options: options('吃饭', '旅游', '买电子产品/衣服', '“我不会膨胀”然后全面膨胀'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 2 },
   { id: 'q75', order: 75, prompt: '我被朋友拍到丑照以后会？', options: options('无所谓', '让他删掉', '抢他手机', '先保存下来以后互相伤害'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 2 },
+
+  { id: 'q76', order: 76, prompt: '如果一个很重要的人让我失望很多次，我更可能？', options: options('直接说清楚', '慢慢疏远', '降低期待但继续相处', '再给一次机会'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+  { id: 'q77', order: 77, prompt: '对我来说，哪件事最难原谅？', options: options('欺骗', '背叛', '不尊重', '在我需要时消失'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+  { id: 'q78', order: 78, prompt: '我最不喜欢别人碰我的哪条边界？', options: options('隐私', '时间安排', '人际关系', '对我的决定指手画脚'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+  { id: 'q79', order: 79, prompt: '朋友做了一件我不认同、但和我无关的事，我会？', options: options('直接劝他', '提醒一次', '尊重他的选择', '看严重程度再决定'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 2 },
+  { id: 'q80', order: 80, prompt: '如果“喜欢”和“适合”只能选一个，我更倾向？', options: options('喜欢', '适合', '看人生阶段', '宁愿都不要'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+  { id: 'q81', order: 81, prompt: '对我来说真正的朋友最重要的是？', options: options('陪伴', '真诚', '可靠', '能理解彼此'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+  { id: 'q82', order: 82, prompt: '如果必须失去一种东西，我最不愿意失去？', options: options('自由', '安全感', '被爱', '对生活的期待'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+  { id: 'q83', order: 83, prompt: '我更接受哪种人生？', options: options('稳定普通', '冒险但精彩', '很成功但很忙', '自由但不确定'), category: 'real_anchor', poolGroup: 'values', mismatchPriority: 3 },
+
+  { id: 'q84', order: 84, prompt: '我真正难过的时候，更希望别人怎么对我？', options: options('陪我说话', '什么都不问，陪着就好', '给我一个人待着', '帮我想办法解决'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+  { id: 'q85', order: 85, prompt: '我开始对一个人失望时，最明显的变化是？', options: options('话变少', '不再主动', '表面正常但心里已经变了', '会直接说出来'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+  { id: 'q86', order: 86, prompt: '我最怕别人误会我哪一点？', options: options('我不在乎', '我很冷漠', '我没能力', '我不真诚'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+  { id: 'q87', order: 87, prompt: '我最容易因为哪件事内耗？', options: options('自己说错的话', '别人对我的态度', '做错的决定', '对未来的不确定'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+  { id: 'q88', order: 88, prompt: '如果关系里出现矛盾，我最希望对方怎么做？', options: options('当场说清楚', '等冷静后再谈', '主动来哄我', '给彼此一点空间'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+  { id: 'q89', order: 89, prompt: '我更怕哪种孤独？', options: options('没人陪', '没人理解', '有人在身边却很疏远', '自己不知道想要什么'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+  { id: 'q90', order: 90, prompt: '如果我突然消失几天，我最可能是在？', options: options('想清静', '情绪不好', '压力太大', '单纯不想和任何人说话'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 2 },
+  { id: 'q91', order: 91, prompt: '别人对我很好时，我更容易？', options: options('很快接受', '慢慢建立信任', '怀疑为什么对我这么好', '表面接受但还是有防备'), category: 'real_anchor', poolGroup: 'inner', mismatchPriority: 3 },
+
+  { id: 'q92', order: 92, prompt: '我看起来最不像、但其实最可能有的一面是？', options: options('很敏感', '很好胜', '很没安全感', '特别容易心软'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 3 },
+  { id: 'q93', order: 93, prompt: '我做重大决定时，最容易受什么影响？', options: options('理性分析', '第一感觉', '身边人的意见', '当时的情绪'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 3 },
+  { id: 'q94', order: 94, prompt: '我发现自己错了以后，最难的是？', options: options('承认自己错了', '向别人道歉', '接受造成的后果', '不再反复想这件事'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 3 },
+  { id: 'q95', order: 95, prompt: '我遇到一个特别厉害的人，更可能？', options: options('欣赏', '想向他学习', '被激起胜负欲', '有点压力'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 2 },
+  { id: 'q96', order: 96, prompt: '我被否定以后第一反应更接近？', options: options('反思是不是自己有问题', '想证明对方错了', '表面没事但很在意', '很快就过去'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 3 },
+  { id: 'q97', order: 97, prompt: '我更接近哪一种“嘴硬”？', options: options('明明难过说没事', '明明喜欢说一般', '明明在意说无所谓', '明明不会还要逞强'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 3 },
+  { id: 'q98', order: 98, prompt: '一个计划突然被打乱，我通常？', options: options('很快适应', '有点烦但继续', '情绪明显受影响', '直接不想干了'), category: 'real_anchor', poolGroup: 'personality', mismatchPriority: 2 },
+
+  { id: 'q99', order: 99, prompt: '我最容易在哪个瞬间对一个人产生好感？', options: options('他对我很温柔', '发现我们特别聊得来', '看到他认真做事', '某个不起眼的小细节'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+  { id: 'q100', order: 100, prompt: '如果发现喜欢的人其实没那么喜欢我，我更可能？', options: options('继续争取', '慢慢退出', '马上抽离', '嘴上退出但很久放不下'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+  { id: 'q101', order: 101, prompt: '哪种行为最容易让我感觉“被喜欢”？', options: options('主动来找我', '记住我的小事', '愿意花时间陪我', '明确表达喜欢'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+  { id: 'q102', order: 102, prompt: '我更怕哪一种感情？', options: options('很喜欢但没结果', '很稳定但没感觉', '对方忽冷忽热', '在一起后越来越陌生'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+  { id: 'q103', order: 103, prompt: '我真正喜欢上一个人以后，更想要的是？', options: options('很多陪伴', '很深的交流', '明确的偏爱', '稳定的未来感'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+  { id: 'q104', order: 104, prompt: '如果两个人互相喜欢，但现实条件很难，我更可能？', options: options('还是试试看', '先解决现实问题', '慢慢放弃', '看对方有多坚定'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+  { id: 'q105', order: 105, prompt: '在感情里，我最容易缺少的是？', options: options('安全感', '新鲜感', '确定感', '个人空间'), category: 'real_anchor', poolGroup: 'relationship', mismatchPriority: 3 },
+
+  { id: 'q106', order: 106, prompt: '如果人生是一款游戏，我最想把哪个属性点满？', options: options('自由', '财富', '魅力', '好奇心'), category: 'real_anchor', poolGroup: 'abstract', mismatchPriority: 2 },
+  { id: 'q107', order: 107, prompt: '如果能偷看自己十年后的一个画面，我最想看到？', options: options('我住在哪里', '我身边是谁', '我在做什么', '我看起来开不开心'), category: 'real_anchor', poolGroup: 'abstract', mismatchPriority: 3 },
+  { id: 'q108', order: 108, prompt: '如果人生必须删掉一种东西，我最舍得删？', options: options('稳定', '刺激', '别人的认可', '对过去的执念'), category: 'real_anchor', poolGroup: 'abstract', mismatchPriority: 3 },
+  { id: 'q109', order: 109, prompt: '如果可以获得一种能力，我最想要？', options: options('回到过去', '看见未来', '知道别人真实想法', '随时去任何地方'), category: 'real_anchor', poolGroup: 'abstract', mismatchPriority: 2 },
+  { id: 'q110', order: 110, prompt: '如果现在的自己能收到未来自己的四个字，我最希望是？', options: options('“你做对了”', '“别怕，去吧”', '“一切值得”', '“换条路走”'), category: 'real_anchor', poolGroup: 'abstract', mismatchPriority: 3 },
+
+  { id: 'q111', order: 111, prompt: '朋友被别人欺负了，但确实是他先犯贱，我会？', options: options('先帮朋友再说', '先骂朋友', '谁有理帮谁', '一边帮一边骂'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 2 },
+  { id: 'q112', order: 112, prompt: '朋友半夜突然说“我心情不好”，我会？', options: options('马上问怎么了', '直接打电话', '先逗他开心', '陪他说但不追问'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 3 },
+  { id: 'q113', order: 113, prompt: '一个很久没联系的朋友突然找我，我第一反应？', options: options('挺开心', '好奇他找我干嘛', '有点尴尬', '完全能无缝接上'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 2 },
+  { id: 'q114', order: 114, prompt: '朋友和对象吵架来找我，我一般？', options: options('无脑站朋友', '分析谁有问题', '先安慰再分析', '主要负责听他吐槽'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 2 },
+  { id: 'q115', order: 115, prompt: '朋友当众拿我的黑历史开玩笑，我更可能？', options: options('一起笑', '当场反击', '表面笑但其实介意', '看他说到什么程度'), category: 'real_anchor', poolGroup: 'roast', mismatchPriority: 3 },
+
+  { id: 'q116', order: 116, prompt: '我临时多出三天假期，最可能？', options: options('马上出去玩', '在家躺三天', '找朋友一起安排', '临时起意去一个陌生地方'), category: 'real_anchor', poolGroup: 'daily', mismatchPriority: 2 },
+  { id: 'q117', order: 117, prompt: '我点餐纠结很久，最后通常会？', options: options('点最熟悉的', '点评价最高的', '点没吃过的', '让别人帮我选'), category: 'real_anchor', poolGroup: 'daily', mismatchPriority: 2 },
+  { id: 'q118', order: 118, prompt: '突然下暴雨但我没带伞，我更可能？', options: options('直接冲', '等雨小', '买把伞', '找人求救'), category: 'real_anchor', poolGroup: 'scenario', mismatchPriority: 2 },
+  { id: 'q119', order: 119, prompt: '我无意中听到别人夸我，第一反应？', options: options('偷偷开心', '想继续听', '假装没听见', '赶紧走，太尴尬了'), category: 'real_anchor', poolGroup: 'scenario', mismatchPriority: 2 },
+  { id: 'q120', order: 120, prompt: '如果一天完全不用考虑钱，我最想拿来干嘛？', options: options('吃顿特别好的', '买一直想买的东西', '去一个想去的地方', '和喜欢的人一起做点什么'), category: 'real_anchor', poolGroup: 'daily', mismatchPriority: 3 },
 ] as const satisfies readonly Question[]
 
 export const QUESTION_POOL = [...QUESTIONS, ...NEW_QUESTIONS] satisfies readonly Question[]

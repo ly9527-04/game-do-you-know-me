@@ -1,3 +1,4 @@
+import { questionGroup, QUESTION_GROUPS } from '@/lib/question-groups'
 import { QUESTION_POOL, QUESTIONS } from '@/lib/questions'
 
 it('preserves the exact classic 25-question set', () => {
@@ -10,28 +11,32 @@ it('preserves the exact classic 25-question set', () => {
   expect(QUESTIONS[24].options[3].text).toBe('做一直拖着没做的事')
 })
 
-it('contains all 75 questions with stable ids and complete choices', () => {
-  expect(QUESTION_POOL).toHaveLength(75)
+it('contains all 120 questions with stable ids and complete choices', () => {
+  expect(QUESTION_POOL).toHaveLength(120)
   expect(QUESTION_POOL.map((item) => item.id)).toEqual(
-    Array.from({ length: 75 }, (_, index) => `q${String(index + 1).padStart(2, '0')}`),
+    Array.from({ length: 120 }, (_, index) => `q${String(index + 1).padStart(2, '0')}`),
   )
+  expect(new Set(QUESTION_POOL.map((item) => item.id)).size).toBe(120)
   expect(QUESTION_POOL.every((item) => item.options.map((option) => option.value).join('') === 'ABCD')).toBe(true)
+  expect(QUESTION_POOL.slice(75).every((item) => [2, 3].includes(item.mismatchPriority))).toBe(true)
 })
 
-it('assigns the required number of questions to each pool group', () => {
+it('assigns the required number of questions to each visible category', () => {
   const groupCounts = Object.fromEntries(
-    ['classic', 'daily', 'personality', 'scenario', 'relationship', 'roast'].map((group) => [
-      group,
-      QUESTION_POOL.filter((question) => question.poolGroup === group).length,
+    QUESTION_GROUPS.map((group) => [
+      group.id,
+      QUESTION_POOL.filter((question) => questionGroup(question) === group.id).length,
     ]),
   )
 
   expect(groupCounts).toEqual({
-    classic: 25,
-    daily: 10,
-    personality: 10,
-    scenario: 10,
-    relationship: 10,
-    roast: 10,
+    abstract: 20,
+    inner: 18,
+    daily: 13,
+    personality: 17,
+    scenario: 12,
+    relationship: 17,
+    roast: 15,
+    values: 8,
   })
 })

@@ -13,7 +13,16 @@ export type FixedQuestionId = typeof FIXED_QUESTION_IDS[number]
 
 export type QuestionCategory = 'abstract' | 'semi_abstract' | 'real_anchor'
 
-export type QuestionPoolGroup = 'classic' | 'daily' | 'personality' | 'scenario' | 'relationship' | 'roast'
+export type QuestionPoolGroup =
+  | 'classic'
+  | 'abstract'
+  | 'inner'
+  | 'daily'
+  | 'personality'
+  | 'scenario'
+  | 'relationship'
+  | 'roast'
+  | 'values'
 
 export interface QuestionOption {
   readonly value: AnswerChoice

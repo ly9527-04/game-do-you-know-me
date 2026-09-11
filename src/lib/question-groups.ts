@@ -1,12 +1,13 @@
 import type { Question } from '@/types/domain'
 export const QUESTION_GROUPS = [
-  { id: 'abstract', label: '抽象与想象', description: '如果你是一束光、一间房…' },
-  { id: 'inner', label: '内心与关系', description: '感受、选择与相处的方式' },
-  { id: 'daily', label: '日常生活', description: '习惯、偏好和生活里的小事' },
-  { id: 'personality', label: '性格脾气', description: '最像你的反应与态度' },
-  { id: 'scenario', label: '情景选择', description: '遇到这些事情，你会怎么做' },
-  { id: 'relationship', label: '情感与暧昧', description: '喜欢、心动与亲密关系' },
-  { id: 'roast', label: '朋友互损', description: '嘴硬、搞怪和朋友才懂的你' },
+  { id: 'abstract', label: '抽象与想象', description: '脑洞这东西，熟人也未必跟得上' },
+  { id: 'inner', label: '内心与关系', description: '你不说出口的，TA真的知道吗' },
+  { id: 'daily', label: '日常生活', description: '越不起眼的小习惯，越容易猜错' },
+  { id: 'personality', label: '性格脾气', description: '好脾气还是硬脾气，看看TA懂几分' },
+  { id: 'scenario', label: '情景选择', description: '事情真发生时，你会选哪条路' },
+  { id: 'relationship', label: '情感与暧昧', description: '心动有迹可循，嘴硬可不一定' },
+  { id: 'roast', label: '损友与社交', description: '敢来猜，说明你们确实挺熟' },
+  { id: 'values', label: '价值观与边界', description: '有些答案，认识很久也未必知道' },
 ] as const
 export function questionGroup(question: Question): string {
   if (question.poolGroup !== 'classic') return question.poolGroup

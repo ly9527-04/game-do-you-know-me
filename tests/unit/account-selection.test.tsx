@@ -8,8 +8,17 @@ import { TestBuilder } from '@/components/account/TestBuilder'
 const props = { userId: 'user-a', nickname: '明', account: '00123456', previousTestId: null, questionSetId: 'set', questionSetVersion: 2, questions: [...QUESTION_POOL] }
 beforeEach(() => localStorage.clear())
 it('places every question in exactly one visible category', () => {
-  expect(QUESTION_POOL).toHaveLength(75)
+  expect(QUESTION_POOL).toHaveLength(120)
   for (const q of QUESTION_POOL) expect(QUESTION_GROUPS.filter(g => g.id === questionGroup(q))).toHaveLength(1)
+})
+it('shows eight category cards with exploratory descriptions', async () => {
+  render(<TestBuilder {...props} />)
+  expect(QUESTION_GROUPS).toHaveLength(8)
+  expect(await screen.findByRole('button', { name: /价值观与边界/ })).toHaveTextContent(
+    '有些答案，认识很久也未必知道',
+  )
+  expect(screen.getByRole('button', { name: /损友与社交/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /朋友互损/ })).not.toBeInTheDocument()
 })
 it('requires acknowledgement before replacing an existing test', async () => {
   render(<TestBuilder {...props} previousTestId="old" />)
@@ -31,5 +40,9 @@ it('allows any 25 distinct questions and passes exactly that selection to answer
   fireEvent.click(screen.getByRole('button', { name: /日常生活/ }))
   for (const checkbox of screen.getAllByRole('checkbox')) expect(checkbox).toBeDisabled()
   fireEvent.click(screen.getByRole('button', { name: '选好了，开始回答' }))
-  expect(screen.getByTestId('selected-quiz').textContent?.split(',')).toEqual(QUESTION_POOL.slice(0,25).map(q => q.id))
+  const expectedSelection = ['abstract', 'inner']
+    .flatMap(group => QUESTION_POOL.filter(q => questionGroup(q) === group))
+    .slice(0, 25)
+    .map(q => q.id)
+  expect(screen.getByTestId('selected-quiz').textContent?.split(',')).toEqual(expectedSelection)
 })
