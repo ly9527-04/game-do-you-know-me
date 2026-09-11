@@ -50,7 +50,7 @@ export function TestBuilder(props: Props) {
   }
   return <section>
     <p className="eyebrow">BUILD YOUR TEST · 自选题目</p><h1 className="gradient-text">哪些问题最像你？</h1>
-    <p className="lede">从75道题中自由挑选25道，选好后再回答自己的测试。不限制每类数量。</p>
+    <p className="lede">从120道题中自由挑选25道，选好后再回答自己的测试。不限制每类数量。</p>
     <div className="selection-summary"><strong role="status" aria-live="polite">已选 {draft.ids.length} / 25 题</strong><button className="button button--primary" disabled={draft.ids.length !== 25} onClick={() => update({ ...draft, started: true })}>选好了，开始回答</button></div>
     {draft.ids.length === 25 && <p className="account-notice">已经选满25题，取消一道后可以换选其他题。</p>}
     {category === null ? <div className="question-categories">{QUESTION_GROUPS.map((group) => {

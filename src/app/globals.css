@@ -174,6 +174,9 @@ summary { cursor: pointer; min-height: 44px; color: #c7d2fe; }
 .account-number { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; margin: 20px 0 12px; border: 1px solid var(--line); border-radius: 16px; color: var(--muted); font-size: 12px; }
 .account-number strong { color: var(--cyan); font-size: 24px; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
 .account-notice { padding: 12px; border-radius: 12px; color: #fde68a; background: #78350f33; border: 1px solid #fbbf2433; font-size: 12px; }
+.homepage-contact { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; color: var(--muted); font-size: 12px; }
+.homepage-contact p { margin: 0; }
+.homepage-contact__number { margin-top: 6px !important; color: var(--cyan); font-weight: 800; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
 .account-logout { display: block; min-height: 48px; margin: 20px auto 0; border: 0; background: transparent; color: var(--muted); }
 .account-back { display: block; margin-top: 24px; padding: 12px; text-align: center; color: var(--violet); min-height: 48px; }
 .account-warning h1 { color: var(--marker); }
