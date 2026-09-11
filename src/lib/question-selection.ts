@@ -2,14 +2,14 @@ import type { Question, QuestionPoolGroup } from '@/types/domain'
 
 export type RandomSource = () => number
 
-const QUOTAS: Readonly<Record<QuestionPoolGroup, number>> = {
+const QUOTAS = {
   classic: 5,
   daily: 4,
   personality: 4,
   scenario: 4,
   relationship: 4,
   roast: 4,
-}
+} as const satisfies Readonly<Partial<Record<QuestionPoolGroup, number>>>
 
 const cryptoRandom: RandomSource = () => {
   const value = new Uint32Array(1)

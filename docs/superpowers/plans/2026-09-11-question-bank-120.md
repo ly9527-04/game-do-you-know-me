@@ -216,14 +216,14 @@ Expected: FAIL，因为004尚不存在。
 1. 以固定ID `00000000-0000-4000-8000-000000000003` upsert version=3，初始`is_active=false`。
 2. 用`insert ... select`把v2的q01～q75完整复制到v3，并对`(question_set_id, id)`冲突执行字段更新。
 3. 用一个完整的`insert ... values`语句明确写出设计稿中的q76～q120共45行；每行包含`id`、v3题集ID、`sort_order`、`prompt`、JSONB `options`、`category='real_anchor'`、`pool_group`和`mismatch_priority`，冲突时更新全部内容字段。
-4. 在事务内用DO块断言v3题数严格等于120，否则抛出`QUESTION_BANK_V3_INCOMPLETE`。
+4. 在事务内用DO块断言v3题数等于当前v2题数加45；生产v2为75题时再严格断言v3等于120，否则抛出`QUESTION_BANK_V3_INCOMPLETE`。全新重置在seed执行前v2只有50题，因此允许暂时生成95题。
 5. 将全部题集设为inactive，再只把`version=3`设为active，最后提交事务。
 
 45行的prompt、options、pool_group和mismatch_priority必须逐字使用设计稿；SQL单引号按PostgreSQL规则双写。迁移不得修改任何tests、test_questions、answers或v1/v2 questions。
 
 - [ ] **Step 5: 同步全新数据库seed**
 
-全新数据库会先执行001～004再运行seed，因此不在seed重复维护45道新题。修改`supabase/seed.sql`末尾的活动题集切换：不再重新激活v2，改为断言v3有120题并保持version=3为唯一活动题集。seed保持幂等，不删除历史题集或测试。
+全新数据库会先执行001～004再运行seed，因此不在seed重复维护45道新题。`supabase/seed.sql`先补齐v2经典题，再把v2中缺失的经典题幂等同步至v3，最后断言v3有120题并保持version=3为唯一活动题集。seed不删除历史题集或测试，也不覆盖已有v3题面。
 
 - [ ] **Step 6: 运行迁移测试确认通过**
 
